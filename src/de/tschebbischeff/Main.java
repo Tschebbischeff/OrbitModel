@@ -1,7 +1,7 @@
 package de.tschebbischeff;
 
-import de.tschebbischeff.planets.Planet;
-import de.tschebbischeff.planets.Vector3d;
+import de.tschebbischeff.math.Quat4d;
+import de.tschebbischeff.math.Vector3d;
 
 public class Main {
 
@@ -9,9 +9,19 @@ public class Main {
     public static final double rithRadius = 1.0d;
 
     public static void main(String[] args) {
-        Planet sun = new Planet();
-        Planet rith = new Planet(sun);
-        Planet exes = new Planet(rith);
+        long timing = System.currentTimeMillis();
+
+        Vector3d v = new Vector3d(1.0d, 0.0d, 0.0d);
+        Quat4d q = Quat4d.identity();
+        q = q.roll(90.0d);
+        v = q.multiply(v);
+
+        System.out.println(q.toRotationMatrix().toString(2));
+        System.out.println(v.toString(2));
+
+        /*OrbitOld sun = new OrbitOld();
+        OrbitOld rith = new OrbitOld(sun);
+        OrbitOld exes = new OrbitOld(rith);
         rith.setDistanceToParent(4279.666146958275521734777073708d) //In Rith-radius
                 .setInclination(0.0d)
                 .setInclinationOffset(0.0d)
@@ -22,7 +32,6 @@ public class Main {
                 .setInclinationOffset(0.0d)
                 .setOrbitalOffset(0.0d)
                 .setOrbitalPeriod(1.0d/56.53d);
-        long timing = System.currentTimeMillis();
         double samples = 0.0d;
         double avgRithDiameter = 0.0d;
         double avgSunDiameter = 0.0d;
@@ -35,11 +44,14 @@ public class Main {
             avgSunDiameter = ((samples / (samples+1)) * avgSunDiameter + (1.0d / (samples+1.0d)) * thisSunDiameter);
             samples++;
         }
-        timing = System.currentTimeMillis() - timing;
         avgRithDiameter = angularDiameter(rithRadius*2.0d, 10.47d);
-        System.out.println("Done in: " + (timing / 1000.0d) + " seconds.");
         System.out.println("Average angular diameter of Sun in zenith: " + avgSunDiameter);
-        System.out.println("Average angular diameter of Rith in zenith: " + avgRithDiameter);
+        System.out.println("Average angular diameter of Rith in zenith: " + avgRithDiameter);*/
+
+
+
+        timing = System.currentTimeMillis() - timing;
+        System.out.println("Done in: " + (timing / 1000.0d) + " seconds.");
     }
 
     public static double angularDiameter(double diameter, double distance) {

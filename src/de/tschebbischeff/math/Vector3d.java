@@ -1,7 +1,7 @@
-package de.tschebbischeff.planets;
+package de.tschebbischeff.math;
 
 /**
- * TODO: MISSING JAVADOC
+ * Vector implementation with double precision.
  *
  * @author Tarek
  * @version 1.0.0
@@ -60,6 +60,11 @@ public class Vector3d {
 
     public double length() {
         return Math.sqrt(this.scalarProduct(this));
+    }
+
+    public Vector3d normalize() {
+        double length = this.length();
+        return new Vector3d(this.getX() / length, this.getY() / length, this.getZ() / length);
     }
 
     public Vector3d add(Vector3d b) {

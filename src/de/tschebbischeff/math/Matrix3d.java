@@ -1,7 +1,7 @@
-package de.tschebbischeff.planets;
+package de.tschebbischeff.math;
 
 /**
- * Implements a column-first matrix from the double type.
+ * Column-first Matrix implementation with double precision.
  *
  * @author Tarek
  * @version 1.0.0
