@@ -1,7 +1,6 @@
 package de.tschebbischeff.model;
 
 import com.sun.javaws.exceptions.InvalidArgumentException;
-import de.tschebbischeff.math.Matrix3d;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 

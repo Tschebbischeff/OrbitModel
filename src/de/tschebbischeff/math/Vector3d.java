@@ -50,6 +50,18 @@ public class Vector3d {
         this.setData(new double[]{x, y, z});
     }
 
+    public static Vector3d xBase() {
+        return new Vector3d(1.0d, 0.0d, 0.0d);
+    }
+
+    public static Vector3d yBase() {
+        return new Vector3d(0.0d, 1.0d, 0.0d);
+    }
+
+    public static Vector3d zBase() {
+        return new Vector3d(0.0d, 0.0d, 1.0d);
+    }
+
     public void setData(double[] v) {
         this.data = v;
     }
@@ -58,8 +70,20 @@ public class Vector3d {
         return this.getX() * b.getX() + this.getY() * b.getY() + this.getZ() * b.getZ();
     }
 
+    public Vector3d crossProduct(Vector3d b) {
+        return new Vector3d(
+                this.getY() * b.getZ() - this.getZ() * b.getY(),
+                this.getZ() * b.getX() - this.getX() * b.getZ(),
+                this.getX() * b.getY() - this.getY() * b.getX()
+        );
+    }
+
+    public double length2() {
+        return this.scalarProduct(this);
+    }
+
     public double length() {
-        return Math.sqrt(this.scalarProduct(this));
+        return Math.sqrt(this.length2());
     }
 
     public Vector3d normalize() {

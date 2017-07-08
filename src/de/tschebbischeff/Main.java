@@ -11,13 +11,17 @@ public class Main {
     public static void main(String[] args) {
         long timing = System.currentTimeMillis();
 
-        Vector3d v = new Vector3d(1.0d, 0.0d, 0.0d);
-        Quat4d q = Quat4d.identity();
-        q = q.roll(90.0d);
-        v = q.multiply(v);
+        Vector3d v1 = Vector3d.xBase();
+        Vector3d v2 = Vector3d.xBase();
+        Quat4d q1 = Quat4d.identity().roll(180.0d).pitch(90.0d);
+        Quat4d q2 = Quat4d.identity().pitch(90.0d);
+        v1 = q1.rotateVector(v1);
+        v2 = q2.rotateVector(v2);
 
-        System.out.println(q.toRotationMatrix().toString(2));
-        System.out.println(v.toString(2));
+        System.out.println("---Q1 Rotated Vector---");
+        System.out.println(v1.toString(2));
+        System.out.println("---Q2 Rotated Vector---");
+        System.out.println(v2.toString(2));
 
         /*OrbitOld sun = new OrbitOld();
         OrbitOld rith = new OrbitOld(sun);
