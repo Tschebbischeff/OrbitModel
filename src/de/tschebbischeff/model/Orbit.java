@@ -173,6 +173,7 @@ public class Orbit {
      * @return The orientation of this orbit's plane.
      */
     public Quat4d getOrbitalPlaneOrientation() {
+        //TODO: Buffer results and invalidate, if parameters should change, this is the "static rotation" which was deleted in last commit.
         Quat4d orbitalRotation = new Quat4d(0.0d, -(this.getLongitudeOfAscendingNode() -270.0d), -this.getInclination());
         return orbitalRotation.multiply(this.parent.getGlobalOrientation());
     }
