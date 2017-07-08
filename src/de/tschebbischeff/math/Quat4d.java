@@ -17,6 +17,23 @@ public class Quat4d {
         this(Quat4d.identity().roll(roll).pitch(pitch).yaw(yaw).getData());
     }
 
+    /**
+     * Creates a quaternion representing the rotation from one vector to another.
+     *
+     * @param x The vector which is rotated by the resulting quaternion to obtain y.
+     * @param y The vector that is the result of x's rotation by the resulting quaternion.
+     */
+    public Quat4d(Vector3d x, Vector3d y) {
+        if (x.scalarProduct(y) > 0.999999d) {
+            this.setData(Quat4d.identity().getData());
+        } else if (x.scalarProduct(y) < -0.999999d) {
+            this.setData(Quat4d.identity().roll(180.0d).getData());
+        } else {
+            Vector3d prod = x.crossProduct(y);
+            this.setData(new Quat4d(Math.sqrt(x.length2() * y.length2()) + x.scalarProduct(y), prod).getData());
+        }
+    }
+
     public Quat4d(double real, Vector3d imaginary) {
         this(real, imaginary.getX(), imaginary.getY(), imaginary.getZ());
     }
@@ -174,12 +191,14 @@ public class Quat4d {
         );
     }
 
-    public String toString(int postComma) {
-        return "[" + String.valueOf(Math.round(this.data[0] * Math.pow(10, postComma)) / Math.pow(10, postComma)) + ", " + String.valueOf(Math.round(this.data[1] * Math.pow(10, postComma)) / Math.pow(10, postComma)) + "i, " + String.valueOf(Math.round(this.data[2] * Math.pow(10, postComma)) / Math.pow(10, postComma)) + "j, " + String.valueOf(Math.round(this.data[3] * Math.pow(10, postComma)) / Math.pow(10, postComma)) + "k]";
+    public String toString(int precision) {
+        return String.format(
+                "[ %1$." + precision + "f   %2$." + precision + "fi   %3$." + precision + "fj   %4$." + precision + "fk ]",
+                this.data[0], this.data[1], this.data[2], this.data[3]);
     }
 
     @Override
     public String toString() {
-        return "[" + String.valueOf(this.data[0]) + ", " + String.valueOf(this.data[1]) + "i, " + String.valueOf(this.data[2]) + "j, " + String.valueOf(this.data[3]) + "k]";
+        return this.toString(3);
     }
 }

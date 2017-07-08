@@ -1,6 +1,7 @@
 package de.tschebbischeff.model;
 
 import com.sun.javaws.exceptions.InvalidArgumentException;
+import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 
 /**
@@ -28,6 +29,14 @@ public class CelestialBody {
      * The radius of this celestial body.
      */
     private double radius = Double.MIN_VALUE;
+    /**
+     * The mass of this celestial body.
+     */
+    private double mass = Double.MIN_VALUE;
+    /**
+     * The axis of rotation around which this body rotates.
+     */
+    private Vector3d axisOfRotation = Vector3d.zBase();
 
     /**
      * Creates a new star.
@@ -38,6 +47,7 @@ public class CelestialBody {
 
     /**
      * Creates a new celestial body on the given orbit. If the orbit is null, this celestial body is classified as a star.
+     *
      * @param orbit The orbit on which this celestial body moves.
      */
     public CelestialBody(Orbit orbit) {
@@ -46,6 +56,7 @@ public class CelestialBody {
 
     /**
      * A star in the context of this model is a celestial body, which has no orbit.
+     *
      * @return Whether this body is a star or a satellite.
      */
     public boolean isStar() {
@@ -54,6 +65,7 @@ public class CelestialBody {
 
     /**
      * Sets the radius of this body
+     *
      * @param r The radius of this body, which must be greater than zero.
      * @return This celestial body for fluent method calls.
      */
@@ -70,11 +82,93 @@ public class CelestialBody {
     }
 
     /**
+     * Sets the mass of this body
+     *
+     * @param m The mass of this body, which must be greater than zero.
+     * @return This celestial body for fluent method calls.
+     */
+    public CelestialBody setMass(double m) {
+        if (this.isStar() && m < (23835.0d / ModelSettings.massScale)) {
+            try {
+                throw new InvalidArgumentException(new String[]{"Mass is too low for a star."});
+            } catch (InvalidArgumentException e) {
+                e.printStackTrace();
+            }
+        }
+        if (!this.isStar() && m >= (23835.0d / ModelSettings.massScale)) {
+            try {
+                throw new InvalidArgumentException(new String[]{"Mass is too high for a non-star celestial body."});
+            } catch (InvalidArgumentException e) {
+                e.printStackTrace();
+            }
+        }
+        if (!this.isStar() && m < Double.MIN_VALUE) {
+            try {
+                throw new InvalidArgumentException(new String[]{"Mass must be positive and non-zero."});
+            } catch (InvalidArgumentException e) {
+                e.printStackTrace();
+            }
+        }
+        this.mass = m;
+        return this;
+    }
+
+    /**
+     * Sets the axis of rotation of this body. The axis is seen as relative to the orbital plane.
+     *
+     * @param a The axis around which this body rotates.
+     * @return This celestial body for fluent method calls.
+     */
+    public CelestialBody setAxisOfRotation(Vector3d a) {
+        this.axisOfRotation = a;
+        return this;
+    }
+
+    /**
      * Gets the radius of this celestial body
-     * @return This bodys radius.
+     *
+     * @return This body's radius.
      */
     public double getRadius() {
         return this.radius;
+    }
+
+    /**
+     * Gets the mass of this celestial body
+     *
+     * @return This body's mass.
+     */
+    public double getMass() {
+        return this.mass;
+    }
+
+    /**
+     * Gets the axis around which this body rotates.
+     * @return This body's axis of rotation.
+     */
+    public Vector3d getAxisOfRotation() {
+        return this.axisOfRotation;
+    }
+
+    /**
+     * Gets the orientation of this body in a global context, that is the orientation of its orbital plane combined
+     * with its axis of rotation.
+     * @return This body's global orientation.
+     */
+    public Quat4d getGlobalOrientation() {
+        if (this.isStar()) {
+            return Quat4d.identity();
+        } else {
+            return new Quat4d(Vector3d.zBase(), this.getAxisOfRotation()).multiply(this.orbit.getOrbitalPlaneOrientation());
+        }
+    }
+
+    /**
+     * Gets the axial tilt of this celestial body.
+     * @return This body's axial tilt.
+     */
+    public double getAxialTilt() {
+        return 0.0d; //TODO
     }
 
     public Vector3d getPosition(double time) {

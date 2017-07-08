@@ -160,7 +160,7 @@ public class Orbit {
      * @param argumentOfPeriapsis The argument of periapsis of this orbit, in degrees.
      * @return This orbit for fluent method calls.
      */
-    public Orbit getArgumentOfPeriapsis(double argumentOfPeriapsis) {
+    public Orbit setArgumentOfPeriapsis(double argumentOfPeriapsis) {
         this.argumentOfPeriapsis = Math.toRadians(argumentOfPeriapsis % 360.0d);
         return this;
     }
@@ -171,6 +171,15 @@ public class Orbit {
      */
     public double getArgumentOfPeriapsis() {
         return Math.toDegrees(this.argumentOfPeriapsis);
+    }
+
+    /**
+     * Gets the orientation of the plane of this orbit.
+     * @return The orientation of this orbit's plane.
+     */
+    public Quat4d getOrbitalPlaneOrientation() {
+        Quat4d orbitalRotation = new Quat4d(0.0d, -(this.getLongitudeOfAscendingNode() -270.0d), -this.getInclination());
+        return orbitalRotation.multiply(this.parent.getGlobalOrientation());
     }
 
     /**

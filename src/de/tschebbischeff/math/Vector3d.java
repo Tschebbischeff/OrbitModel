@@ -103,12 +103,14 @@ public class Vector3d {
         return new Vector3d(this.getX() * b, this.getY() * b, this.getZ() * b);
     }
 
-    public String toString(int postComma) {
-        return "[" + String.valueOf(Math.round(this.data[0] * Math.pow(10, postComma)) / Math.pow(10, postComma)) + ", " + String.valueOf(Math.round(this.data[1] * Math.pow(10, postComma)) / Math.pow(10, postComma)) + ", " + String.valueOf(Math.round(this.data[2] * Math.pow(10, postComma)) / Math.pow(10, postComma)) + "]";
+    public String toString(int precision) {
+        return String.format(
+                "[ %1$." + precision + "f   %2$." + precision + "f   %3$." + precision + "f ]",
+                this.data[0], this.data[1], this.data[2]);
     }
 
     @Override
     public String toString() {
-        return "[" + String.valueOf(this.data[0]) + ", " + String.valueOf(this.data[1]) + ", " + String.valueOf(this.data[2]) + "]";
+        return this.toString(3);
     }
 }
