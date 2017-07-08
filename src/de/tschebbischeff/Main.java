@@ -17,17 +17,20 @@ public class Main {
 
         CelestialBody star = (new CelestialBody())
                 .setRadius(12.060877401267325d)
-                .setMass(1.0d);
+                .setMass(23835.0d); //TODO: Correct mass
         Orbit rithOrbit = (new Orbit(star))
-                .setSemiMajorAxis(4279.666146958275521734777073708d);
+                .setSemiMajorAxis(4279.666146958275521734777073708d)
+                .setInclination(0.0d);
         CelestialBody rith = (new CelestialBody(rithOrbit))
-                .setRadius(1.0d);
+                .setRadius(1.0d)
+                .setMass(317.8d); //TODO: Correct mass
         Orbit exesOrbit = (new Orbit(rith))
                 .setSemiMajorAxis(11.47d)
                 .setInclination(0.0d)
                 .setLongitudeOfAscendingNode(0.0d);
         CelestialBody exes = (new CelestialBody(exesOrbit))
-                .setRadius(0.09113015119223012115403870635522d);
+                .setRadius(0.09113015119223012115403870635522d)
+                .setMass(1.0d); //TODO: Correct mass
 
         /*OrbitOld sun = new OrbitOld();
         OrbitOld rith = new OrbitOld(sun);

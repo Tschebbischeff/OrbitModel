@@ -40,7 +40,7 @@ public class Orbit {
     /**
      * The longitude of the ascending node of the orbit.
      */
-    private double longitudeOfAscendingNode = 3.0d/4.0d * Math.PI;
+    private double longitudeOfAscendingNode = 3.0d/2.0d * Math.PI;
     /**
      * The argument of periapsis of the orbit.
      */
@@ -174,7 +174,7 @@ public class Orbit {
      */
     public Quat4d getOrbitalPlaneOrientation() {
         //TODO: Buffer results and invalidate, if parameters should change, this is the "static rotation" which was deleted in last commit.
-        Quat4d orbitalRotation = new Quat4d(0.0d, -(this.getLongitudeOfAscendingNode() -270.0d), -this.getInclination());
+        Quat4d orbitalRotation = new Quat4d(0.0d, this.getInclination(), -(this.getLongitudeOfAscendingNode() -270.0d));
         return orbitalRotation.multiply(this.parent.getGlobalOrientation());
     }
 

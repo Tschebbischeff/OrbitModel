@@ -8,6 +8,9 @@ package de.tschebbischeff.math;
  */
 public class Vector3d {
 
+    public static final Vector3d X_AXIS = new Vector3d(1.0d, 0.0d, 0.0d);
+    public static final Vector3d Y_AXIS = new Vector3d(0.0d, 1.0d, 0.0d);
+    public static final Vector3d Z_AXIS = new Vector3d(0.0d, 0.0d, 1.0d);
     private double[] data;
 
     public Vector3d(double x, double y, double z) {
@@ -50,18 +53,6 @@ public class Vector3d {
         this.setData(new double[]{x, y, z});
     }
 
-    public static Vector3d xBase() {
-        return new Vector3d(1.0d, 0.0d, 0.0d);
-    }
-
-    public static Vector3d yBase() {
-        return new Vector3d(0.0d, 1.0d, 0.0d);
-    }
-
-    public static Vector3d zBase() {
-        return new Vector3d(0.0d, 0.0d, 1.0d);
-    }
-
     public void setData(double[] v) {
         this.data = v;
     }
@@ -101,6 +92,18 @@ public class Vector3d {
 
     public Vector3d multiply(double b) {
         return new Vector3d(this.getX() * b, this.getY() * b, this.getZ() * b);
+    }
+
+    public double angleBetween(Vector3d b) {
+        return Math.toDegrees(Math.acos(this.scalarProduct(b) / this.length() * b.length()));
+    }
+
+    public Vector3d anyOrthogonal() {
+        double x = Math.abs(this.getX());
+        double y = Math.abs(this.getY());
+        double z = Math.abs(this.getZ());
+        Vector3d other = x < y ? (x < z ? Vector3d.X_AXIS : Vector3d.Z_AXIS) : (y < z ? Vector3d.Y_AXIS : Vector3d.Z_AXIS);
+        return this.crossProduct(other);
     }
 
     public String toString(int precision) {

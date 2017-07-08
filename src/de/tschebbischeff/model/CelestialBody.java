@@ -36,7 +36,7 @@ public class CelestialBody {
     /**
      * The axis of rotation around which this body rotates.
      */
-    private Vector3d axisOfRotation = Vector3d.zBase();
+    private Vector3d axisOfRotation = Vector3d.Z_AXIS;
 
     /**
      * Creates a new star.
@@ -159,9 +159,9 @@ public class CelestialBody {
      */
     public Quat4d getGlobalOrientation() {
         if (this.isStar()) {
-            return Quat4d.identity();
+            return new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation());
         } else {
-            return new Quat4d(Vector3d.zBase(), this.getAxisOfRotation()).multiply(this.orbit.getOrbitalPlaneOrientation());
+            return new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).multiply(this.orbit.getOrbitalPlaneOrientation());
         }
     }
 
@@ -172,9 +172,9 @@ public class CelestialBody {
      */
     public double getAxialTilt() {
         if (this.isStar()) {
-            return 0.0d;
+            return Vector3d.Z_AXIS.angleBetween(this.getAxisOfRotation());
         } else {
-            return Math.acos(this.orbit.getOrbitalPlaneOrientation().rotateVector(Vector3d.zBase()).scalarProduct(this.getAxisOfRotation()));
+            return this.orbit.getOrbitalPlaneOrientation().rotateVector(Vector3d.Z_AXIS).angleBetween(this.getAxisOfRotation());
         }
     }
 

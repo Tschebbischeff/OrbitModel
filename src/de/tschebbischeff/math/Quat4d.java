@@ -27,10 +27,10 @@ public class Quat4d {
         if (x.scalarProduct(y) > 0.999999d) {
             this.setData(Quat4d.identity().getData());
         } else if (x.scalarProduct(y) < -0.999999d) {
-            this.setData(Quat4d.identity().roll(180.0d).getData());
+            this.setData(new Quat4d(0.0d, x.anyOrthogonal().normalize()).getData());
         } else {
             Vector3d prod = x.crossProduct(y);
-            this.setData(new Quat4d(Math.sqrt(x.length2() * y.length2()) + x.scalarProduct(y), prod).getData());
+            this.setData(new Quat4d(Math.sqrt(x.length2() * y.length2()) + x.scalarProduct(y), prod).normalize().getData());
         }
     }
 
@@ -111,11 +111,10 @@ public class Quat4d {
     }
 
     public Quat4d pitch(double pitch) {
-        return this.multiply(new Quat4d(Math.cos(Math.toRadians(pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(pitch) * 0.5d), 0.0d)).checkUnity();
+        return this.multiply(new Quat4d(Math.cos(Math.toRadians(-pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(-pitch) * 0.5d), 0.0d)).checkUnity();
     }
 
     public Quat4d yaw(double yaw) {
-        System.out.println(this);
         return this.multiply(new Quat4d(Math.cos(Math.toRadians(yaw) * 0.5d), 0.0d, 0.0d, Math.sin(Math.toRadians(yaw) * 0.5d))).checkUnity();
     }
 
