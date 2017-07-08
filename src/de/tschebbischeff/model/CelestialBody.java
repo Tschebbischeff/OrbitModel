@@ -144,6 +144,7 @@ public class CelestialBody {
 
     /**
      * Gets the axis around which this body rotates.
+     *
      * @return This body's axis of rotation.
      */
     public Vector3d getAxisOfRotation() {
@@ -153,6 +154,7 @@ public class CelestialBody {
     /**
      * Gets the orientation of this body in a global context, that is the orientation of its orbital plane combined
      * with its axis of rotation.
+     *
      * @return This body's global orientation.
      */
     public Quat4d getGlobalOrientation() {
@@ -165,10 +167,15 @@ public class CelestialBody {
 
     /**
      * Gets the axial tilt of this celestial body.
+     *
      * @return This body's axial tilt.
      */
     public double getAxialTilt() {
-        return 0.0d; //TODO
+        if (this.isStar()) {
+            return 0.0d;
+        } else {
+            return Math.acos(this.orbit.getOrbitalPlaneOrientation().rotateVector(Vector3d.zBase()).scalarProduct(this.getAxisOfRotation()));
+        }
     }
 
     public Vector3d getPosition(double time) {

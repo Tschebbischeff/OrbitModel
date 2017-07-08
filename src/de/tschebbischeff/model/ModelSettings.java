@@ -1,7 +1,7 @@
 package de.tschebbischeff.model;
 
 /**
- * TODO: MISSING JAVADOC
+ * Contains static settings for the model.
  *
  * @author Roboscope
  * @version 1.0

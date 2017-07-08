@@ -45,10 +45,6 @@ public class Orbit {
      * The argument of periapsis of the orbit.
      */
     private double argumentOfPeriapsis = Math.PI;
-    /**
-     * The static rotational part for calculation of the orbital position
-     */
-    private Quat4d staticRotation = null;
 
     /**
      * Creates a new orbit around a given celestial body.
@@ -56,7 +52,6 @@ public class Orbit {
      */
     public Orbit(CelestialBody parent) {
         this.parent = parent;
-        this.calculateStaticRotation();
     }
 
     /**
@@ -180,13 +175,6 @@ public class Orbit {
     public Quat4d getOrbitalPlaneOrientation() {
         Quat4d orbitalRotation = new Quat4d(0.0d, -(this.getLongitudeOfAscendingNode() -270.0d), -this.getInclination());
         return orbitalRotation.multiply(this.parent.getGlobalOrientation());
-    }
-
-    /**
-     * Calculates the fixed part of this orbits rotation for position calculation, which is not dependant on the trueAnomaly
-     */
-    private void calculateStaticRotation() {
-        //TODO: Calculate static rotation
     }
 
     /*public Vector3d getOrbitalPositionByTrueAnomaly(double trueAnomaly) {
