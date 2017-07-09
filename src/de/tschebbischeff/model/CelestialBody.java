@@ -3,6 +3,8 @@ package de.tschebbischeff.model;
 import com.sun.javaws.exceptions.InvalidArgumentException;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
+import de.tschebbischeff.model.caches.OrientationCache;
+import de.tschebbischeff.model.caches.PositionCache;
 
 /**
  * Models celestial bodies.
@@ -14,27 +16,14 @@ import de.tschebbischeff.math.Vector3d;
 public class CelestialBody {
 
     /**
-     * Buffers the last result of the calculation of the position.
+     * Caches the last result of the calculation of the position.
      */
-    private class PositionBuffer {
-        Double time = null;
-        Vector3d position = new Vector3d(0.0d, 0.0d, 0.0d);
-    }
-    private PositionBuffer positionBuffer = new PositionBuffer();
+    private PositionCache positionCache = new PositionCache();
 
     /**
-     * Buffers the last result of the calculation of the orientation.
+     * Caches the last result of the calculation of the orientation.
      */
-    private class OrientationBuffer {
-        Quat4d orientation = null;
-        Quat4d parentOrientation = null;
-
-        void invalidate() {
-            this.orientation = null;
-            this.parentOrientation = null;
-        }
-    }
-    private OrientationBuffer orientationBuffer = new OrientationBuffer();
+    private OrientationCache orientationCache = new OrientationCache();
 
     /**
      * The orbit of this celestial body.
@@ -136,7 +125,7 @@ public class CelestialBody {
      */
     public CelestialBody setAxisOfRotation(Vector3d a) {
         this.axisOfRotation = a;
-        this.orientationBuffer.invalidate();
+        this.orientationCache.invalidate();
         return this;
     }
 
@@ -175,16 +164,16 @@ public class CelestialBody {
      */
     public Quat4d getGlobalOrientation() {
         if (this.isStar()) {
-            this.orientationBuffer.parentOrientation = null;
-            this.orientationBuffer.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation());
+            this.orientationCache.parentOrientation = null;
+            this.orientationCache.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation());
         } else {
             Quat4d parentOrientation = this.orbit.getOrbitalPlaneOrientation();
-            if (!this.orientationBuffer.parentOrientation.equals(parentOrientation)) {
-                this.orientationBuffer.parentOrientation = parentOrientation;
-                this.orientationBuffer.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).multiply(parentOrientation);
+            if (!this.orientationCache.parentOrientation.equals(parentOrientation)) {
+                this.orientationCache.parentOrientation = parentOrientation;
+                this.orientationCache.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).multiply(parentOrientation);
             }
         }
-        return this.orientationBuffer.orientation;
+        return this.orientationCache.orientation;
     }
 
     /**
@@ -194,22 +183,22 @@ public class CelestialBody {
      */
     public double getAxialTilt() {
         if (this.isStar()) {
-            return Vector3d.Z_AXIS.angleBetween(this.getAxisOfRotation());
+            return Vector3d.Z_AXIS.angle(this.getAxisOfRotation());
         } else {
-            return this.orbit.getOrbitalPlaneOrientation().rotateVector(Vector3d.Z_AXIS).angleBetween(this.getAxisOfRotation());
+            return this.orbit.getOrbitalPlaneOrientation().rotateVector(Vector3d.Z_AXIS).angle(this.getAxisOfRotation());
         }
     }
 
     public Vector3d getPosition(double time) {
-        if (this.positionBuffer.time != time) {
-            this.positionBuffer.time = time;
+        if (this.positionCache.argument != time) {
+            this.positionCache.argument = time;
             if (this.orbit != null) {
-                this.positionBuffer.position = new Vector3d(0.0d, 0.0d, 0.0d);
+                this.positionCache.position = new Vector3d(0.0d, 0.0d, 0.0d);
             } else {
-                this.positionBuffer.position = new Vector3d(0.0d, 0.0d, 0.0d);
+                this.positionCache.position = new Vector3d(0.0d, 0.0d, 0.0d);
             }
         }
-        return this.positionBuffer.position;
+        return this.positionCache.position;
     }
 
 }

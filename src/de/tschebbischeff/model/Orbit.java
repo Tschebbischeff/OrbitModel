@@ -3,6 +3,8 @@ package de.tschebbischeff.model;
 import com.sun.javaws.exceptions.InvalidArgumentException;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
+import de.tschebbischeff.model.caches.OrientationCache;
+import de.tschebbischeff.model.caches.PositionCache;
 
 /**
  * Models any orbit around a given central celestial body.
@@ -14,29 +16,14 @@ import de.tschebbischeff.math.Vector3d;
 public class Orbit {
 
     /**
-     * Buffers the last result of the calculation of the orbital position.
+     * Caches the last result of the calculation of the orbital position.
      */
-    private class PositionBuffer {
-        Double trueAnomaly = null;
-        Vector3d position = new Vector3d(0.0d, 0.0d, 0.0d);
-    }
-
-    private PositionBuffer positionBuffer = new PositionBuffer();
+    private PositionCache positionCache = new PositionCache();
 
     /**
-     * Buffers the last result of the calculation of the orbital orientation.
+     * Caches the last result of the calculation of the orbital orientation.
      */
-    private class OrientationBuffer {
-        Quat4d orientation = null;
-        Quat4d parentOrientation = null;
-
-        void invalidate() {
-            this.orientation = null;
-            this.parentOrientation = null;
-        }
-    }
-
-    private OrientationBuffer orientationBuffer = new OrientationBuffer();
+    private OrientationCache orientationCache = new OrientationCache();
 
     /**
      * The celestial body at the center of the orbit.
@@ -144,7 +131,7 @@ public class Orbit {
      */
     public Orbit setInclination(double inclination) {
         this.inclination = Math.toRadians(inclination % 360.0d);
-        this.orientationBuffer.invalidate();
+        this.orientationCache.invalidate();
         return this;
     }
 
@@ -165,7 +152,7 @@ public class Orbit {
      */
     public Orbit setLongitudeOfAscendingNode(double longitudeOfAscendingNode) {
         this.longitudeOfAscendingNode = Math.toRadians(longitudeOfAscendingNode % 360.0d);
-        this.orientationBuffer.invalidate();
+        this.orientationCache.invalidate();
         return this;
     }
 
@@ -206,12 +193,12 @@ public class Orbit {
      */
     public Quat4d getOrbitalPlaneOrientation() {
         Quat4d parentOrientation = this.parent.getGlobalOrientation();
-        if (!this.orientationBuffer.parentOrientation.equals(parentOrientation)) {
+        if (!this.orientationCache.parentOrientation.equals(parentOrientation)) {
             Quat4d orbitalRotation = new Quat4d(0.0d, this.getInclination(), -(this.getLongitudeOfAscendingNode() - 270.0d));
-            this.orientationBuffer.parentOrientation = parentOrientation;
-            this.orientationBuffer.orientation = orbitalRotation.multiply(parentOrientation);
+            this.orientationCache.parentOrientation = parentOrientation;
+            this.orientationCache.orientation = orbitalRotation.multiply(parentOrientation);
         }
-        return this.orientationBuffer.orientation;
+        return this.orientationCache.orientation;
     }
 
     /**
@@ -221,17 +208,17 @@ public class Orbit {
      * @return The position as a three dimensional vector, corresponding to that angle.
      */
     public Vector3d getOrbitalPositionByTrueAnomaly(double trueAnomaly) {
-        if (this.positionBuffer.trueAnomaly != trueAnomaly) {
-            this.positionBuffer.trueAnomaly = trueAnomaly;
+        if (this.positionCache.argument != trueAnomaly) {
+            this.positionCache.argument = trueAnomaly;
             double distance = this.getSemiMajorAxis();
             /*
             TODO: Calculate correct distance from focal point
             Using semi major axis, focal distance from center, true anomaly, eccentricity
             and info that distance = semi major axis-focal distance from center at periapsis
              */
-            this.positionBuffer.position = Quat4d.identity().yaw(-(trueAnomaly+this.getArgumentOfPeriapsis()-90.0d)).multiply(this.getOrbitalPlaneOrientation()).rotateVector(Vector3d.X_AXIS).multiply(distance);
+            this.positionCache.position = Quat4d.identity().yaw(-(trueAnomaly + this.getArgumentOfPeriapsis() - 90.0d)).multiply(this.getOrbitalPlaneOrientation()).rotateVector(Vector3d.X_AXIS).scale(distance);
         }
-        return this.positionBuffer.position;
+        return this.positionCache.position;
     }
 
 }

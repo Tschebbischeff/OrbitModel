@@ -24,13 +24,13 @@ public class Quat4d {
      * @param y The vector that is the result of x's rotation by the resulting quaternion.
      */
     public Quat4d(Vector3d x, Vector3d y) {
-        if (x.scalarProduct(y) > 0.999999d) {
+        if (x.dot(y) > 0.999999d) {
             this.setData(Quat4d.identity().getData());
-        } else if (x.scalarProduct(y) < -0.999999d) {
+        } else if (x.dot(y) < -0.999999d) {
             this.setData(new Quat4d(0.0d, x.anyOrthogonal().normalize()).getData());
         } else {
-            Vector3d prod = x.crossProduct(y);
-            this.setData(new Quat4d(Math.sqrt(x.length2() * y.length2()) + x.scalarProduct(y), prod).normalize().getData());
+            Vector3d prod = x.cross(y);
+            this.setData(new Quat4d(Math.sqrt(x.len2() * y.len2()) + x.dot(y), prod).normalize().getData());
         }
     }
 
@@ -66,28 +66,33 @@ public class Quat4d {
         return this.data;
     }
 
-    public void setW(double w) {
+    public Quat4d setW(double w) {
         this.data[0] = w;
+        return this;
     }
 
-    public void setI(double i) {
+    public Quat4d setI(double i) {
         this.data[1] = i;
+        return this;
     }
 
-    public void setJ(double j) {
+    public Quat4d setJ(double j) {
         this.data[2] = j;
+        return this;
     }
 
-    public void setK(double k) {
+    public Quat4d setK(double k) {
         this.data[3] = k;
+        return this;
     }
 
-    public void setData(double w, double i, double j, double k) {
-        this.setData(new double[]{w, i, j, k});
+    public Quat4d setData(double w, double i, double j, double k) {
+        return this.setData(new double[]{w, i, j, k});
     }
 
-    public void setData(double[] v) {
+    public Quat4d setData(double[] v) {
         this.data = v;
+        return this;
     }
 
     private Quat4d checkUnity() {
@@ -129,7 +134,7 @@ public class Quat4d {
     public Quat4d crossProduct(Quat4d b) {
         return new Quat4d(
                 0.0d,
-                this.getImaginaryPart().crossProduct(b.getImaginaryPart())
+                this.getImaginaryPart().cross(b.getImaginaryPart())
         );
     }
 
@@ -139,8 +144,8 @@ public class Quat4d {
         Vector3d x = this.getImaginaryPart();
         Vector3d y = r.getImaginaryPart();
         return new Quat4d(
-                x0 * y0 - x.scalarProduct(y),
-                y.multiply(x0).add(x.multiply(y0)).add(x.crossProduct(y))
+                x0 * y0 - x.dot(y),
+                y.scale(x0).add(x.scale(y0)).add(x.cross(y))
         );
     }
 

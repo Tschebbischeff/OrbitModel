@@ -109,6 +109,7 @@ public class Matrix3d {
 
     /**
      * Return the first row of this matrix as a column-vector.
+     *
      * @return This matrix's first row as a vector.
      */
     public Vector3d getRow1() {
@@ -117,6 +118,7 @@ public class Matrix3d {
 
     /**
      * Return the second row of this matrix as a column-vector.
+     *
      * @return This matrix's second row as a vector.
      */
     public Vector3d getRow2() {
@@ -125,6 +127,7 @@ public class Matrix3d {
 
     /**
      * Return the third row of this matrix as a column-vector.
+     *
      * @return This matrix's third row as a vector.
      */
     public Vector3d getRow3() {
@@ -133,6 +136,7 @@ public class Matrix3d {
 
     /**
      * Returns the row of this matrix identified by the index (starting at zero) as a column-vector.
+     *
      * @param r The index of the row to return.
      * @return This matrix's r-th row as a vector.
      */
@@ -143,6 +147,7 @@ public class Matrix3d {
 
     /**
      * Returns an identity matrix, which's values are 0 on non-diagonal elements and 1 on diagonal elements.
+     *
      * @return A new object of the identity matrix.
      */
     public static Matrix3d identity() {
@@ -152,6 +157,7 @@ public class Matrix3d {
     /**
      * Transposes this matrix, by switching its rows and columns. I.e. each element is inserted into the position
      * mirrored on the diagonal of the matrix.
+     *
      * @return A new object containing a transposed matrix of this one.
      */
     public Matrix3d transpose() {
@@ -161,6 +167,7 @@ public class Matrix3d {
     /**
      * Multiplies this matrix with a second matrix. As multiplication is not commutative this matrix is multiplied
      * from the left with the second matrix b.
+     *
      * @param b The matrix to multiply this matrix with.
      * @return A new object containing the product of this and the second matrix b: this*b.
      */
@@ -168,7 +175,7 @@ public class Matrix3d {
         double[][] result = new double[3][3];
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 3; c++) {
-                result[c][r] = this.getRowByIndex(r).scalarProduct(b.getColumnByIndex(c));
+                result[c][r] = this.getRowByIndex(r).dot(b.getColumnByIndex(c));
             }
         }
         return new Matrix3d(result);
@@ -177,13 +184,14 @@ public class Matrix3d {
     /**
      * Multiplies this matrix with a vector of the same dimension. The matrix is multiplied from the left with
      * the vector v.
+     *
      * @param v The vector to multiply this matrix with.
      * @return A new object containing the product of this matrix and the vector v: this*v.
      */
     public Vector3d multiply(Vector3d v) {
         double[] result = new double[3];
         for (int r = 0; r < 3; r++) {
-            result[r] = this.getRowByIndex(r).scalarProduct(v);
+            result[r] = this.getRowByIndex(r).dot(v);
         }
         return new Vector3d(result);
     }
@@ -191,6 +199,7 @@ public class Matrix3d {
     /**
      * Transforms this matrix into a readable padded format, while rounding to the specified number of digits behind the comma.
      * Also pads with spaces from the left, depending on the number of digits of the highest number in the column.
+     *
      * @param precision The number of digits behind the comma.
      * @return A padded representation of the matrix.
      */
@@ -199,7 +208,7 @@ public class Matrix3d {
         int[] neg = new int[]{0, 0, 0};
         for (int c = 0; c < 3; c++) {
             for (int r = 0; r < 3; r++) {
-                while(Math.abs(this.data[c][r]) > Math.pow(10, max[c])) {
+                while (Math.abs(this.data[c][r]) > Math.pow(10, max[c])) {
                     max[c]++;
                     neg[c] = (this.data[c][r] < 0) ? 1 : 0;
                 }
@@ -207,13 +216,13 @@ public class Matrix3d {
             max[c]++;
         }
         String[] format = new String[]{
-                "$0" + (max[0]+neg[0]+precision) + "." + precision + "f",
-                "$0" + (max[1]+neg[1]+precision) + "." + precision + "f",
-                "$0" + (max[2]+neg[2]+precision) + "." + precision + "f"};
+                "$0" + (max[0] + neg[0] + precision) + "." + precision + "f",
+                "$0" + (max[1] + neg[1] + precision) + "." + precision + "f",
+                "$0" + (max[2] + neg[2] + precision) + "." + precision + "f"};
         String formatted = String.format(
                 "[ %1" + format[0] + "   %2" + format[1] + "   %3" + format[2] + "\n" +
-                "  %4" + format[0] + "   %5" + format[1] + "   %6" + format[2] + "\n" +
-                "  %7" + format[0] + "   %8" + format[1] + "   %9" + format[2] + " ]",
+                        "  %4" + format[0] + "   %5" + format[1] + "   %6" + format[2] + "\n" +
+                        "  %7" + format[0] + "   %8" + format[1] + "   %9" + format[2] + " ]",
                 this.data[0][0], this.data[1][0], this.data[2][0],
                 this.data[0][1], this.data[1][1], this.data[2][1],
                 this.data[0][2], this.data[1][2], this.data[2][2]);
@@ -230,6 +239,7 @@ public class Matrix3d {
     /**
      * Transforms this matrix into a readable padded format with three digits behind the comma.
      * Also pads with spaces from the left, depending on the biggest number in each column of the matrix.
+     *
      * @return The string representation of this matrix.
      */
     @Override

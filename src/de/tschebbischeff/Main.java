@@ -51,9 +51,9 @@ public class Main {
         for (double time = 0.0d; time <= 1.0d; time += 0.01d) {
             Vector3d rithPosition = rith.getPosition(time);
             Vector3d exesPosition = exes.getPosition(time);
-            double thisRithDiameter = angularDiameter(rithRadius*2.0d, exesPosition.subtract(rithPosition).length()-1.0d);
+            double thisRithDiameter = angularDiameter(rithRadius*2.0d, exesPosition.sub(rithPosition).len()-1.0d);
             avgRithDiameter = ((samples / (samples+1)) * avgRithDiameter + (1 / (samples+1.0d)) * thisRithDiameter);
-            double thisSunDiameter = angularDiameter(sunRadius*2.0d, exesPosition.length());
+            double thisSunDiameter = angularDiameter(sunRadius*2.0d, exesPosition.len());
             avgSunDiameter = ((samples / (samples+1)) * avgSunDiameter + (1.0d / (samples+1.0d)) * thisSunDiameter);
             samples++;
         }
@@ -66,6 +66,6 @@ public class Main {
     }
 
     public static double angularDiameter(double diameter, double distance) {
-        return 2.0d*Math.asin(diameter / (2.0d*distance)) * (360.0d / (2.0d*Math.PI));
+        return 2.0d * Math.asin(diameter / (2.0d * distance)) * (360.0d / (2.0d * Math.PI));
     }
 }
