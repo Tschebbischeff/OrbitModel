@@ -17,7 +17,7 @@ public class Main {
 
         CelestialBody star = (new CelestialBody())
                 .setRadius(12.060877401267325d)
-                .setMass(23835.0d); //TODO: Correct mass
+                .setMass(23835.0d); //TODO: Correct mass, currently only minimal star mass
         Orbit rithOrbit = (new Orbit(star))
                 .setSemiMajorAxis(4279.666146958275521734777073708d)
                 .setInclination(0.0d);

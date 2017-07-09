@@ -16,10 +16,25 @@ public class CelestialBody {
     /**
      * Buffers the last result of the calculation of the position.
      */
-    private static class QueryBuffer {
-        static Double time = null;
-        static Vector3d position = new Vector3d(0.0d, 0.0d, 0.0d);
+    private class PositionBuffer {
+        Double time = null;
+        Vector3d position = new Vector3d(0.0d, 0.0d, 0.0d);
     }
+    private PositionBuffer positionBuffer = new PositionBuffer();
+
+    /**
+     * Buffers the last result of the calculation of the orientation.
+     */
+    private class OrientationBuffer {
+        Quat4d orientation = null;
+        Quat4d parentOrientation = null;
+
+        void invalidate() {
+            this.orientation = null;
+            this.parentOrientation = null;
+        }
+    }
+    private OrientationBuffer orientationBuffer = new OrientationBuffer();
 
     /**
      * The orbit of this celestial body.
@@ -121,6 +136,7 @@ public class CelestialBody {
      */
     public CelestialBody setAxisOfRotation(Vector3d a) {
         this.axisOfRotation = a;
+        this.orientationBuffer.invalidate();
         return this;
     }
 
@@ -159,10 +175,16 @@ public class CelestialBody {
      */
     public Quat4d getGlobalOrientation() {
         if (this.isStar()) {
-            return new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation());
+            this.orientationBuffer.parentOrientation = null;
+            this.orientationBuffer.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation());
         } else {
-            return new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).multiply(this.orbit.getOrbitalPlaneOrientation());
+            Quat4d parentOrientation = this.orbit.getOrbitalPlaneOrientation();
+            if (!this.orientationBuffer.parentOrientation.equals(parentOrientation)) {
+                this.orientationBuffer.parentOrientation = parentOrientation;
+                this.orientationBuffer.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).multiply(parentOrientation);
+            }
         }
+        return this.orientationBuffer.orientation;
     }
 
     /**
@@ -179,15 +201,15 @@ public class CelestialBody {
     }
 
     public Vector3d getPosition(double time) {
-        if (QueryBuffer.time != time) {
-            QueryBuffer.time = time;
+        if (this.positionBuffer.time != time) {
+            this.positionBuffer.time = time;
             if (this.orbit != null) {
-                QueryBuffer.position = new Vector3d(0.0d, 0.0d, 0.0d);
+                this.positionBuffer.position = new Vector3d(0.0d, 0.0d, 0.0d);
             } else {
-                QueryBuffer.position = new Vector3d(0.0d, 0.0d, 0.0d);
+                this.positionBuffer.position = new Vector3d(0.0d, 0.0d, 0.0d);
             }
         }
-        return QueryBuffer.position;
+        return this.positionBuffer.position;
     }
 
 }

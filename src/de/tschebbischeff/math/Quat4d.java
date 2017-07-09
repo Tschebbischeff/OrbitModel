@@ -190,6 +190,15 @@ public class Quat4d {
         );
     }
 
+    @Override
+    public boolean equals(Object r) {
+        if (r instanceof Quat4d) {
+            Quat4d q = (Quat4d) r;
+            return (this.getW() == q.getW() && this.getI() == q.getI() && this.getJ() == q.getJ() && this.getK() == q.getK());
+        }
+        return false;
+    }
+
     public String toString(int precision) {
         return String.format(
                 "[ %1$." + precision + "f   %2$." + precision + "fi   %3$." + precision + "fj   %4$." + precision + "fk ]",
