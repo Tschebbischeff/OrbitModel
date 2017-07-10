@@ -24,5 +24,12 @@ public class ModelSettings {
      * may be most useful to supply the mass of your host star in earth masses as the scale.
      */
     public static double massScale = 1.0d;
+    /**
+     * Change this factor to the scale you are using for time.
+     * 1.0 means that any time value you supply to the model is in seconds.
+     * 60.0 means that any time value you supply to the model is in minutes.
+     * Generally speaking 1.0 of your value corresponds to timeScale seconds.
+     */
+    public static double timeScale = 1.0d;
 
 }

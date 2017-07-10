@@ -12,25 +12,26 @@ public class Main {
     public static void main(String[] args) {
         long timing = System.currentTimeMillis();
 
-        ModelSettings.distanceScale = 1000.0d * 69911.0d;
-        ModelSettings.massScale = 1.0d;
+        ModelSettings.distanceScale = 1000.0d * 69911.0d; //Jupiter radii
+        ModelSettings.massScale = 1.0d; //kilograms
+        ModelSettings.timeScale = 1281600.0; //years
 
         CelestialBody star = (new CelestialBody())
                 .setRadius(12.060877401267325d)
-                .setMass(23835.0d); //TODO: Correct mass, currently only minimal star mass
+                .setMass(432900.0d);
         Orbit rithOrbit = (new Orbit(star))
                 .setSemiMajorAxis(4279.666146958275521734777073708d)
                 .setInclination(0.0d);
         CelestialBody rith = (new CelestialBody(rithOrbit))
                 .setRadius(1.0d)
-                .setMass(317.8d); //TODO: Correct mass
+                .setMass(317.8d); //Currently a jupiter clone
         Orbit exesOrbit = (new Orbit(rith))
                 .setSemiMajorAxis(11.47d)
                 .setInclination(0.0d)
                 .setLongitudeOfAscendingNode(0.0d);
         CelestialBody exes = (new CelestialBody(exesOrbit))
                 .setRadius(0.09113015119223012115403870635522d)
-                .setMass(1.0d); //TODO: Correct mass
+                .setMass(1.0d); //Currently an earth clone
 
         /*OrbitOld sun = new OrbitOld();
         OrbitOld rith = new OrbitOld(sun);

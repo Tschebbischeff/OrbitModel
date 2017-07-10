@@ -194,7 +194,7 @@ public class Orbit {
     public Quat4d getOrbitalPlaneOrientation() {
         Quat4d parentOrientation = this.parent.getGlobalOrientation();
         if (!this.orientationCache.parentOrientation.equals(parentOrientation)) {
-            Quat4d orbitalRotation = new Quat4d(0.0d, this.getInclination(), -(this.getLongitudeOfAscendingNode() - 270.0d));
+            Quat4d orbitalRotation = new Quat4d(0.0d, 0.0d, -(this.getArgumentOfPeriapsis() - 90.0d)).multiply(new Quat4d(0.0d, this.getInclination(), -(this.getLongitudeOfAscendingNode() - 270.0d)));
             this.orientationCache.parentOrientation = parentOrientation;
             this.orientationCache.orientation = orbitalRotation.multiply(parentOrientation);
         }
@@ -210,15 +210,24 @@ public class Orbit {
     public Vector3d getOrbitalPositionByTrueAnomaly(double trueAnomaly) {
         if (this.positionCache.argument != trueAnomaly) {
             this.positionCache.argument = trueAnomaly;
-            double distance = this.getSemiMajorAxis();
-            /*
-            TODO: Calculate correct distance from focal point
-            Using semi major axis, focal distance from center, true anomaly, eccentricity
-            and info that distance = semi major axis-focal distance from center at periapsis
-             */
-            this.positionCache.position = Quat4d.identity().yaw(-(trueAnomaly + this.getArgumentOfPeriapsis() - 90.0d)).multiply(this.getOrbitalPlaneOrientation()).rotateVector(Vector3d.X_AXIS).scale(distance);
+            //Local coordinate system calculations
+            double major = this.getSemiMajorAxis();
+            double minor = this.getSemiMinorAxis();
+            Vector3d orbitalPosition = new Vector3d(major * Math.cos(trueAnomaly), minor * Math.sin(trueAnomaly), 0.0d);
+            Vector3d focusPosition = Vector3d.X_AXIS.scale(Math.sqrt(major * major - minor * minor));
+            //Transform positions to global coordinate system...
+            this.positionCache.position = this.getOrbitalPlaneOrientation().rotateVector(focusPosition.sub(orbitalPosition));
         }
         return this.positionCache.position;
+    }
+
+    /**
+     * Gets the celestial body at the center / focus of this orbit.
+     *
+     * @return The parent celestial body.
+     */
+    protected CelestialBody getParentBody() {
+        return this.parent;
     }
 
 }
