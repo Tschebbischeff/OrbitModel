@@ -171,7 +171,7 @@ public class Matrix3d {
      * @param b The matrix to multiply this matrix with.
      * @return A new object containing the product of this and the second matrix b: this*b.
      */
-    public Matrix3d multiply(Matrix3d b) {
+    public Matrix3d mult(Matrix3d b) {
         double[][] result = new double[3][3];
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 3; c++) {
@@ -188,7 +188,7 @@ public class Matrix3d {
      * @param v The vector to multiply this matrix with.
      * @return A new object containing the product of this matrix and the vector v: this*v.
      */
-    public Vector3d multiply(Vector3d v) {
+    public Vector3d mult(Vector3d v) {
         double[] result = new double[3];
         for (int r = 0; r < 3; r++) {
             result[r] = this.getRowByIndex(r).dot(v);

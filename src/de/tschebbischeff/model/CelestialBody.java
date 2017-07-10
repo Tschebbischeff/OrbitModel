@@ -1,7 +1,6 @@
 package de.tschebbischeff.model;
 
 import com.sun.javaws.exceptions.InvalidArgumentException;
-import com.sun.org.apache.xpath.internal.operations.Mod;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.caches.OrientationCache;
@@ -244,7 +243,7 @@ public class CelestialBody {
             Quat4d parentOrientation = this.orbit.getOrbitalPlaneOrientation();
             if (!this.orientationCache.parentOrientation.equals(parentOrientation)) {
                 this.orientationCache.parentOrientation = parentOrientation;
-                this.orientationCache.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).multiply(parentOrientation);
+                this.orientationCache.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).mult(parentOrientation);
             }
         }
         return this.orientationCache.orientation;

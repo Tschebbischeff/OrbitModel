@@ -8,11 +8,32 @@ package de.tschebbischeff.math;
  */
 public class Quat4d {
 
+    /**
+     * Factor defining, when the quaternion is considered to not be a unit quaternion anymore.
+     */
     private static final double UNITY_FACTOR = 1.01d;
+    /**
+     * The upper bound determining unity of the quaternion, if the length of the quaternion is above this threshold
+     * it is not considered a unit quaternion anymore.
+     */
     private static final double UNITY_BOUND_HI = UNITY_FACTOR * UNITY_FACTOR;
+    /**
+     * The lower bound determining unity of the quaternion, if the length of the quaternion is below this threshold
+     * it is not considered a unit quaternion anymore.
+     */
     private static final double UNITY_BOUND_LO = (1.0d / UNITY_FACTOR) * (1.0d / UNITY_FACTOR);
+    /**
+     * Stores the quaternion data in a 4 element array
+     */
     private double[] data;
 
+    /**
+     * Creates a quaternion that rolls pitches and yaws
+     *
+     * @param roll  The roll represented by the quaternion.
+     * @param pitch The pitch represented by the quaternion.
+     * @param yaw   The yaw represented by the quaternion.
+     */
     public Quat4d(double roll, double pitch, double yaw) {
         this(Quat4d.identity().roll(roll).pitch(pitch).yaw(yaw).getData());
     }
@@ -96,7 +117,7 @@ public class Quat4d {
     }
 
     private Quat4d checkUnity() {
-        double length = this.length2();
+        double length = this.len2();
         if (length > UNITY_BOUND_HI || length < UNITY_BOUND_LO) {
             return this.normalize();
         }
@@ -112,33 +133,33 @@ public class Quat4d {
     }
 
     public Quat4d roll(double roll) {
-        return this.multiply(new Quat4d(Math.cos(Math.toRadians(roll) * 0.5d), Math.sin(Math.toRadians(roll) * 0.5d), 0.0d, 0.0d)).checkUnity();
+        return this.mult(new Quat4d(Math.cos(Math.toRadians(roll) * 0.5d), Math.sin(Math.toRadians(roll) * 0.5d), 0.0d, 0.0d)).checkUnity();
     }
 
     public Quat4d pitch(double pitch) {
-        return this.multiply(new Quat4d(Math.cos(Math.toRadians(-pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(-pitch) * 0.5d), 0.0d)).checkUnity();
+        return this.mult(new Quat4d(Math.cos(Math.toRadians(-pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(-pitch) * 0.5d), 0.0d)).checkUnity();
     }
 
     public Quat4d yaw(double yaw) {
-        return this.multiply(new Quat4d(Math.cos(Math.toRadians(yaw) * 0.5d), 0.0d, 0.0d, Math.sin(Math.toRadians(yaw) * 0.5d))).checkUnity();
+        return this.mult(new Quat4d(Math.cos(Math.toRadians(yaw) * 0.5d), 0.0d, 0.0d, Math.sin(Math.toRadians(yaw) * 0.5d))).checkUnity();
     }
 
     public Quat4d add(Quat4d b) {
         return new Quat4d(this.getW() + b.getW(), this.getI() + b.getI(), this.getJ() + b.getJ(), this.getK() + b.getK());
     }
 
-    public double scalarProduct(Quat4d b) {
+    public double dot(Quat4d b) {
         return this.getW() * b.getW() + this.getI() * b.getI() + this.getJ() * b.getJ() + this.getK() * b.getK();
     }
 
-    public Quat4d crossProduct(Quat4d b) {
+    public Quat4d cross(Quat4d b) {
         return new Quat4d(
                 0.0d,
                 this.getImaginaryPart().cross(b.getImaginaryPart())
         );
     }
 
-    public Quat4d multiply(Quat4d r) {
+    public Quat4d mult(Quat4d r) {
         double x0 = this.getRealPart();
         double y0 = r.getRealPart();
         Vector3d x = this.getImaginaryPart();
@@ -150,23 +171,23 @@ public class Quat4d {
     }
 
     public Vector3d rotateVector(Vector3d v) {
-        return this.toRotationMatrix().multiply(v);
+        return this.toRotationMatrix().mult(v);
     }
 
     public Quat4d conjugate() {
         return new Quat4d(this.getW(), -this.getI(), -this.getJ(), -this.getK());
     }
 
-    public double length2() {
-        return this.scalarProduct(this);
+    public double len2() {
+        return this.dot(this);
     }
 
-    public double length() {
-        return Math.sqrt(this.length2());
+    public double len() {
+        return Math.sqrt(this.len2());
     }
 
     public Quat4d normalize() {
-        double length = this.length();
+        double length = this.len();
         return new Quat4d(this.getW() / length, this.getI() / length, this.getJ() / length, this.getK() / length);
     }
 
@@ -179,7 +200,7 @@ public class Quat4d {
     }
 
     public Matrix3d toRotationMatrix() {
-        double s2 = 2.0d / (this.length2() * this.length2());
+        double s2 = 2.0d / (this.len2() * this.len2());
         return new Matrix3d(
                 1.0d - s2 * (this.getJ() * this.getJ() + this.getK() * this.getK()),
                 s2 * (this.getI() * this.getJ() - this.getW() * this.getK()),
