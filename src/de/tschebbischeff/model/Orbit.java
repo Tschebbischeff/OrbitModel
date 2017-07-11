@@ -36,7 +36,7 @@ public class Orbit {
     /**
      * The greatest distance to the parent celestial body on the orbit.
      */
-    private double semiMajorAxis = 1.0d;
+    private double semiMajorAxis = Scales.astronomicalUnit();
     /**
      * The inclination of the orbit.
      */
@@ -44,11 +44,11 @@ public class Orbit {
     /**
      * The longitude of the ascending node of the orbit.
      */
-    private double longitudeOfAscendingNode = 3.0d / 2.0d * Math.PI;
+    private double longitudeOfAscendingNode = 0.0d;
     /**
      * The argument of periapsis of the orbit.
      */
-    private double argumentOfPeriapsis = Math.PI / 2.0d;
+    private double argumentOfPeriapsis = 0.0d;
 
     /**
      * Creates a new orbit around a given celestial body.
@@ -146,6 +146,8 @@ public class Orbit {
 
     /**
      * Sets the longitude of ascending node of this orbit, which defines the rotational axis of the inclination.
+     * Zero longitude of ascending node means, the ascending node is positioned in -Y direction.
+     * (I.e. the reference direction is (0, -1, 0) in a right-handed coordinate system)
      *
      * @param longitudeOfAscendingNode The longitude of ascending node of this orbit, in degrees.
      * @return This orbit for fluent method calls.
@@ -168,6 +170,8 @@ public class Orbit {
     /**
      * Sets the argument of periapsis of this orbit, which defines at which point of the orbit the distance to
      * the parent celestial body reaches its minimum.
+     * An argument of zero means, that the periapsis coincides with the ascending node.
+     * (I.e. the angle is measured from the ascending node)
      *
      * @param argumentOfPeriapsis The argument of periapsis of this orbit, in degrees.
      * @return This orbit for fluent method calls.
@@ -193,9 +197,9 @@ public class Orbit {
      */
     public Quat4d getOrbitalPlaneOrientation() {
         Quat4d parentOrientation = this.parent.getGlobalOrientation();
-        if (!this.orientationCache.parentOrientation.equals(parentOrientation)) {
+        if (this.orientationCache.parentOrientation == null || !this.orientationCache.parentOrientation.equals(parentOrientation)) {
             //Quat4d orbitalRotation = new Quat4d(0.0d, 0.0d, -(this.getArgumentOfPeriapsis() - 90.0d)).mult(new Quat4d(0.0d, this.getInclination(), -(this.getLongitudeOfAscendingNode() - 270.0d)));
-            Quat4d orbitalRotation = Quat4d.identity().yaw(-(this.getLongitudeOfAscendingNode() - 270.0d)).pitch(this.getInclination()).yaw(-(this.getArgumentOfPeriapsis() - 90.0d));
+            Quat4d orbitalRotation = Quat4d.identity().yaw(this.getLongitudeOfAscendingNode()).pitch(this.getInclination()).yaw(this.getArgumentOfPeriapsis());
             this.orientationCache.parentOrientation = parentOrientation;
             this.orientationCache.orientation = orbitalRotation.mult(parentOrientation);
         }
@@ -209,15 +213,16 @@ public class Orbit {
      * @return The position as a three dimensional vector, corresponding to that angle.
      */
     public Vector3d getOrbitalPositionByTrueAnomaly(double trueAnomaly) {
-        if (this.positionCache.argument != trueAnomaly) {
+        if (this.positionCache.argument == null || this.positionCache.argument != trueAnomaly) {
             this.positionCache.argument = trueAnomaly;
             //Local coordinate system calculations
             double major = this.getSemiMajorAxis();
             double minor = this.getSemiMinorAxis();
-            Vector3d orbitalPosition = new Vector3d(major * Math.cos(trueAnomaly), minor * Math.sin(trueAnomaly), 0.0d);
-            Vector3d focusPosition = Vector3d.X_AXIS.scale(Math.sqrt(major * major - minor * minor));
+            //Vector3d orbitalPosition = new Vector3d(major * Math.cos(trueAnomaly), minor * Math.sin(trueAnomaly), 0.0d);
+            Vector3d orbitalPosition = new Vector3d(minor * Math.sin(trueAnomaly), -major * Math.cos(trueAnomaly), 0.0d);
+            Vector3d focusPosition = Vector3d.Y_AXIS_NEG.scale(Math.sqrt(major * major - minor * minor));
             //Transform positions to global coordinate system...
-            this.positionCache.position = this.getOrbitalPlaneOrientation().rotateVector(focusPosition.sub(orbitalPosition));
+            this.positionCache.position = this.getOrbitalPlaneOrientation().rotateVector(orbitalPosition.sub(focusPosition));
         }
         return this.positionCache.position;
     }

@@ -1,68 +1,82 @@
 package de.tschebbischeff;
 
-import de.tschebbischeff.math.Matrix3d;
-import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.CelestialBody;
-import de.tschebbischeff.model.ModelSettings;
 import de.tschebbischeff.model.Orbit;
+import de.tschebbischeff.model.Scales;
 
 public class Main {
 
     public static void main(String[] args) {
         long timing = System.currentTimeMillis();
 
-        ModelSettings.distanceScale = 1000.0d * 69911.0d; //Jupiter radii
-        ModelSettings.massScale = 1.0d; //kilograms
-        ModelSettings.timeScale = 1281600.0; //years
-
+        //==============DEFINITION==============\\
         CelestialBody star = (new CelestialBody())
-                .setRadius(12.060877401267325d)
-                .setMass(432900.0d);
+                .setRadius(8.43188E8d)
+                .setMass(432900.0d * Scales.earthMass());
         Orbit rithOrbit = (new Orbit(star))
-                .setSemiMajorAxis(4279.666146958275521734777073708d)
-                .setInclination(0.0d);
+                .setSemiMajorAxis(2.9919574E11)
+                .setEccentricity(0.0d)
+                .setInclination(0.0d)
+                .setLongitudeOfAscendingNode(0.0d)
+                .setArgumentOfPeriapsis(90.0d);
         CelestialBody rith = (new CelestialBody(rithOrbit))
-                .setRadius(1.0d)
-                .setMass(317.8d); //Currently a jupiter clone
+                .setRadius(69911000.0d)
+                .setMass(317.8d * Scales.earthMass()); //Currently a jupiter clone
         Orbit exesOrbit = (new Orbit(rith))
-                .setSemiMajorAxis(11.47d)
+                .setSemiMajorAxis(8.0187917E8)
+                .setEccentricity(0.0d)
                 .setInclination(0.0d)
-                .setLongitudeOfAscendingNode(0.0d);
+                .setLongitudeOfAscendingNode(0.0d)
+                .setArgumentOfPeriapsis(0.0d);
         CelestialBody exes = (new CelestialBody(exesOrbit))
-                .setRadius(0.09113015119223012115403870635522d)
-                .setMass(1.0d); //Currently an earth clone
+                .setRadius(6371000.0d)
+                .setMass(1.0d * Scales.earthMass()); //Currently an earth clone
 
-        /*OrbitOld sun = new OrbitOld();
-        OrbitOld rith = new OrbitOld(sun);
-        OrbitOld exes = new OrbitOld(rith);
-        rith.setDistanceToParent(4279.666146958275521734777073708d) //In Rith-radius = 69911km
-                .setInclination(0.0d)
-                .setInclinationOffset(0.0d)
-                .setOrbitalOffset(0.0d)
-                .setOrbitalPeriod(1.0d);
-        exes.setDistanceToParent(11.47d)
-                .setInclination(0.0d)
-                .setInclinationOffset(0.0d)
-                .setOrbitalOffset(0.0d)
-                .setOrbitalPeriod(1.0d/56.53d);
+        //==============OUTPUT==============\\
+        double rithSiderealPeriod = rith.getSiderealPeriod();
+        double exesSiderealPeriod = exes.getSiderealPeriod();
+        System.out.println("===RITH===");
+        System.out.println("Sidereal period is: " + (rithSiderealPeriod / Scales.year()) + " years");
+        System.out.println("Position at zero: " + rith.getPosition(0.0d));
+        System.out.println("===EXES===");
+        System.out.println("Sidereal period is: " + (exesSiderealPeriod / Scales.day()) + " days");
+        System.out.println("Position at zero: " + exes.getPosition(0.0d));
+        System.out.println("===INTERACTION===");
+        System.out.println("Exes turns " + (rithSiderealPeriod / exesSiderealPeriod) + " times around Rith per Rith-year.");
+
         double samples = 0.0d;
+        int stepNum = 1000;
+        double minRithDiameter = Double.MAX_VALUE;
         double avgRithDiameter = 0.0d;
-        double avgSunDiameter = 0.0d;
-        for (double time = 0.0d; time <= 1.0d; time += 0.01d) {
+        double maxRithDiameter = 0.0d;
+        double minStarDiameter = Double.MAX_VALUE;
+        double avgStarDiameter = 0.0d;
+        double maxStarDiameter = 0.0d;
+        for (double time = 0.0d; time <= rith.getSiderealPeriod(); time += rith.getSiderealPeriod() / ((double) stepNum)) {
             Vector3d rithPosition = rith.getPosition(time);
             Vector3d exesPosition = exes.getPosition(time);
-            double thisRithDiameter = angularDiameter(rithRadius*2.0d, exesPosition.sub(rithPosition).len()-1.0d);
+            double thisRithDiameter = angularDiameter(rith.getRadius() * 2.0d, exesPosition.sub(rithPosition).len() - exes.getRadius());
+            minRithDiameter = Math.min(minRithDiameter, thisRithDiameter);
             avgRithDiameter = ((samples / (samples+1)) * avgRithDiameter + (1 / (samples+1.0d)) * thisRithDiameter);
-            double thisSunDiameter = angularDiameter(sunRadius*2.0d, exesPosition.len());
-            avgSunDiameter = ((samples / (samples+1)) * avgSunDiameter + (1.0d / (samples+1.0d)) * thisSunDiameter);
+            maxRithDiameter = Math.max(maxRithDiameter, thisRithDiameter);
+            double thisStarDiameter = angularDiameter(star.getRadius() * 2.0d, exesPosition.len() - exes.getRadius());
+            minStarDiameter = Math.min(minStarDiameter, thisStarDiameter);
+            avgStarDiameter = ((samples / (samples+1)) * avgStarDiameter + (1.0d / (samples+1.0d)) * thisStarDiameter);
+            maxStarDiameter = Math.max(maxStarDiameter, thisStarDiameter);
             samples++;
         }
-        avgRithDiameter = angularDiameter(rithRadius*2.0d, 10.47d);
-        System.out.println("Average angular diameter of Sun in zenith: " + avgSunDiameter);
-        System.out.println("Average angular diameter of Rith in zenith: " + avgRithDiameter);*/
+        System.out.println("===ANGULAR DIAMETERS - STAR===");
+        System.out.println("Min angular diameter of Star in zenith: " + minStarDiameter);
+        System.out.println("Average angular diameter of Star in zenith: " + avgStarDiameter);
+        System.out.println("Max angular diameter of Star in zenith: " + maxStarDiameter);
+        System.out.println("===ANGULAR DIAMETERS - RITH===");
+        System.out.println("Min angular diameter of Rith in zenith: " + minRithDiameter);
+        System.out.println("Average angular diameter of Rith in zenith: " + avgRithDiameter);
+        System.out.println("Max angular diameter of Rith in zenith: " + maxRithDiameter);
 
         timing = System.currentTimeMillis() - timing;
+        System.out.println("===END===");
         System.out.println("Done in: " + (timing / 1000.0d) + " seconds.");
     }
 

@@ -15,13 +15,25 @@ public class Vector3d {
      */
     public static final Vector3d X_AXIS = new Vector3d(1.0d, 0.0d, 0.0d);
     /**
+     * A vector representing the negative x-axis
+     */
+    public static final Vector3d X_AXIS_NEG = new Vector3d(-1.0d, 0.0d, 0.0d);
+    /**
      * A vector representing the y-axis
      */
     public static final Vector3d Y_AXIS = new Vector3d(0.0d, 1.0d, 0.0d);
     /**
+     * A vector representing the negative y-axis
+     */
+    public static final Vector3d Y_AXIS_NEG = new Vector3d(0.0d, -1.0d, 0.0d);
+    /**
      * A vector representing the z-axis
      */
     public static final Vector3d Z_AXIS = new Vector3d(0.0d, 0.0d, 1.0d);
+    /**
+     * A vector representing the negative z-axis
+     */
+    public static final Vector3d Z_AXIS_NEG = new Vector3d(0.0d, 0.0d, -1.0d);
     /**
      * Stores the vector data in a 3 element array
      */

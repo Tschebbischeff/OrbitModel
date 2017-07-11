@@ -100,14 +100,14 @@ public class CelestialBody {
      * @return This celestial body for fluent method calls.
      */
     public CelestialBody setMass(double m) {
-        if (this.isStar() && m < (23835.0d / ModelSettings.massScale)) {
+        if (this.isStar() && m < (23835.0d * Scales.earthMass())) {
             try {
                 throw new InvalidArgumentException(new String[]{"Mass is too low for a star."});
             } catch (InvalidArgumentException e) {
                 e.printStackTrace();
             }
         }
-        if (!this.isStar() && m >= (23835.0d / ModelSettings.massScale)) {
+        if (!this.isStar() && m >= (23835.0d * Scales.earthMass())) {
             try {
                 throw new InvalidArgumentException(new String[]{"Mass is too high for a non-star celestial body."});
             } catch (InvalidArgumentException e) {
@@ -241,7 +241,7 @@ public class CelestialBody {
             this.orientationCache.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation());
         } else {
             Quat4d parentOrientation = this.orbit.getOrbitalPlaneOrientation();
-            if (!this.orientationCache.parentOrientation.equals(parentOrientation)) {
+            if (this.orientationCache.parentOrientation == null || !this.orientationCache.parentOrientation.equals(parentOrientation)) {
                 this.orientationCache.parentOrientation = parentOrientation;
                 this.orientationCache.orientation = new Quat4d(Vector3d.Z_AXIS, this.getAxisOfRotation()).mult(parentOrientation);
             }
@@ -271,10 +271,10 @@ public class CelestialBody {
      * @return The position of the celestial body in a global coordinate system at the given time.
      */
     public Vector3d getPosition(double time) {
-        if (this.positionCache.argument != time) {
+        if (this.positionCache.argument == null || this.positionCache.argument != time) {
             this.positionCache.argument = time;
             if (this.orbit != null) {
-                this.positionCache.position = this.orbit.getOrbitalPositionByTrueAnomaly(2 * Math.PI * (time / this.getSiderealPeriod() + this.getOrbitalOffset()));
+                this.positionCache.position = this.orbit.getParentBody().getPosition(time).add(this.orbit.getOrbitalPositionByTrueAnomaly(2 * Math.PI * (time / this.getSiderealPeriod() + this.getOrbitalOffset())));
             } else {
                 this.positionCache.position = new Vector3d(0.0d, 0.0d, 0.0d);
             }
@@ -287,14 +287,11 @@ public class CelestialBody {
      *
      * @return The sidereal period of this celestial body. Zero for stars.
      */
-    private double getSiderealPeriod() {
+    public double getSiderealPeriod() {
         if (this.orbit == null) {
             return 0.0d;
         } else {
-            double scaledGravitationalConstant = 1.117562474882786336235766912257200267916945746818486d * Math.pow(10, -35); //in m^3 / (earthmasses * seconds^2)
-            scaledGravitationalConstant = scaledGravitationalConstant * Math.pow(ModelSettings.distanceScale, 3) / ModelSettings.massScale / Math.pow(ModelSettings.timeScale, 2);
-            //return Math.sqrt(4*Math.PI*Math.PI / (scaledGravitationalConstant*(this.getMass() + this.orbit.getParentBody().getMass())) * Math.pow(this.orbit.getSemiMajorAxis(), 3));
-            return Math.sqrt(4 * Math.PI * Math.PI / (scaledGravitationalConstant * (this.getMass() + this.orbit.getParentBody().getMass())) * Math.pow(this.orbit.getSemiMajorAxis() / (149597870700.0d / ModelSettings.distanceScale), 3));
+            return 2 * Math.PI * Math.sqrt((this.orbit.getSemiMajorAxis() * this.orbit.getSemiMajorAxis() * this.orbit.getSemiMajorAxis()) / (Scales.gravitationalConstant() * (this.getMass() + this.orbit.getParentBody().getMass())));
         }
     }
 
