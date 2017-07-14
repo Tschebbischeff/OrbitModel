@@ -321,7 +321,6 @@ public class GlVisualizer {
         glBindVertexArray(vao);
         try (MemoryStack stack = MemoryStack.stackPush()) {
             DoubleBuffer vertices = stack.mallocDouble((Math.round((float) Math.pow(2, this.orbitResolution))) * 7);
-            System.out.println((Math.round((float) Math.pow(2, this.orbitResolution))));
             Vector3d vertex;
             double trueAnomaly = 0d;
             for (int step = 0; step < Math.pow(2, this.orbitResolution); step++) {
@@ -368,7 +367,7 @@ public class GlVisualizer {
         glUniformMatrix4fv(this.uniformProjectionMatrix, false, projectionMatrix.getData());
 
         // Set the clear color
-        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
@@ -387,7 +386,7 @@ public class GlVisualizer {
                     new Vector4f((float) rotation[0][1], (float) rotation[1][1], (float) rotation[2][1], 0f),
                     new Vector4f((float) rotation[0][2], (float) rotation[1][2], (float) rotation[2][2], 0f),
                     new Vector4f(0f, 0f, 0f, 1f)
-            ).transpose();
+            );
             Matrix4f t = new Matrix4f(
                     new Vector4f(1f, 0f, 0f, (float) -cameraTranslation.getX()),
                     new Vector4f(0f, 1f, 0f, (float) -cameraTranslation.getY()),
@@ -467,8 +466,8 @@ public class GlVisualizer {
      * @param deltaTime The time passed since this method was last called.
      */
     private void handleInput(double deltaTime) {
-        Vector3d forward = this.cameraRotation.yaw(180).rotateVector(Vector3d.Z_AXIS_NEG).normalize();
-        Vector3d right = this.cameraRotation.yaw(180).pitch(90).rotateVector(Vector3d.Z_AXIS_NEG).normalize();
+        Vector3d forward = this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).normalize();
+        Vector3d right = this.cameraRotation.rotateVector(Vector3d.X_AXIS).normalize();
         if (KeyListener.isKeyDown(GLFW_KEY_W)) {
             this.cameraTranslation = this.cameraTranslation.add(forward.scale(this.cameraSpeed*deltaTime));
         }
@@ -483,9 +482,9 @@ public class GlVisualizer {
         }
         glfwGetCursorPos(window, xPos, yPos);
         glfwSetCursorPos(window, 0, 0);
-        this.cameraAzimuth = (this.cameraAzimuth - (this.cameraTurnSpeed*deltaTime*xPos[0])) % 360.0d;
+        this.cameraAzimuth = (this.cameraAzimuth + (this.cameraTurnSpeed*deltaTime*xPos[0])) % 360.0d;
         this.cameraZenith = Math.max(-89d, Math.min(89d, (this.cameraZenith - (this.cameraTurnSpeed*deltaTime*yPos[0]))));
-        this.cameraRotation = Quat4d.identity().pitch(this.cameraAzimuth).roll(this.cameraZenith);
+        this.cameraRotation = Quat4d.identity().pitch(this.cameraAzimuth).roll(-this.cameraZenith);
     }
 
     /**

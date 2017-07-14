@@ -133,15 +133,15 @@ public class Quat4d {
     }
 
     public Quat4d roll(double roll) {
-        return this.mult(new Quat4d(Math.cos(Math.toRadians(roll) * 0.5d), Math.sin(Math.toRadians(roll) * 0.5d), 0.0d, 0.0d)).checkUnity();
+        return new Quat4d(Math.cos(Math.toRadians(roll) * 0.5d), Math.sin(Math.toRadians(roll) * 0.5d), 0.0d, 0.0d).mult(this).checkUnity();
     }
 
     public Quat4d pitch(double pitch) {
-        return this.mult(new Quat4d(Math.cos(Math.toRadians(pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(pitch) * 0.5d), 0.0d)).checkUnity();
+        return new Quat4d(Math.cos(Math.toRadians(pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(pitch) * 0.5d), 0.0d).mult(this).checkUnity();
     }
 
     public Quat4d yaw(double yaw) {
-        return this.mult(new Quat4d(Math.cos(Math.toRadians(yaw) * 0.5d), 0.0d, 0.0d, Math.sin(Math.toRadians(yaw) * 0.5d))).checkUnity();
+        return new Quat4d(Math.cos(Math.toRadians(yaw) * 0.5d), 0.0d, 0.0d, Math.sin(Math.toRadians(yaw) * 0.5d)).mult(this).checkUnity();
     }
 
     public Quat4d add(Quat4d b) {

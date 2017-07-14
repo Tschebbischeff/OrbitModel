@@ -198,8 +198,7 @@ public class Orbit {
     public Quat4d getOrbitalPlaneOrientation() {
         Quat4d parentOrientation = this.parent.getGlobalOrientation();
         if (this.orientationCache.parentOrientation == null || !this.orientationCache.parentOrientation.equals(parentOrientation)) {
-            //Quat4d orbitalRotation = new Quat4d(0.0d, 0.0d, -(this.getArgumentOfPeriapsis() - 90.0d)).mult(new Quat4d(0.0d, this.getInclination(), -(this.getLongitudeOfAscendingNode() - 270.0d)));
-            Quat4d orbitalRotation = Quat4d.identity().yaw(this.getLongitudeOfAscendingNode()).pitch(this.getInclination()).yaw(this.getArgumentOfPeriapsis());
+            Quat4d orbitalRotation = Quat4d.identity().yaw(-this.getLongitudeOfAscendingNode()).pitch(this.getInclination()).yaw(-this.getArgumentOfPeriapsis());
             this.orientationCache.parentOrientation = parentOrientation;
             this.orientationCache.orientation = orbitalRotation.mult(parentOrientation);
         }

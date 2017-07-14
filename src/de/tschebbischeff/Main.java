@@ -81,7 +81,7 @@ public class Main {
         System.out.println("Done in: " + (timing / 1000.0d) + " seconds.");
         System.out.println("===STARTING VISUALIZATION===");
 
-        new GlVisualizer(500, 500)
+        new GlVisualizer(1000, 1000)
                 .setOrbitResolution(7)
                 .setCameraSpeed(Scales.astronomicalUnit()*0.5d)
                 .setCameraTurnSpeed(10.0d)
