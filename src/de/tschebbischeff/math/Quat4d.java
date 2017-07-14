@@ -137,7 +137,7 @@ public class Quat4d {
     }
 
     public Quat4d pitch(double pitch) {
-        return this.mult(new Quat4d(Math.cos(Math.toRadians(-pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(-pitch) * 0.5d), 0.0d)).checkUnity();
+        return this.mult(new Quat4d(Math.cos(Math.toRadians(pitch) * 0.5d), 0.0d, Math.sin(Math.toRadians(pitch) * 0.5d), 0.0d)).checkUnity();
     }
 
     public Quat4d yaw(double yaw) {
@@ -201,7 +201,22 @@ public class Quat4d {
 
     public Matrix3d toRotationMatrix() {
         double s2 = 2.0d / (this.len2() * this.len2());
+        //RIGHT HANDED
         return new Matrix3d(
+                1.0d - s2 * (this.getJ() * this.getJ() + this.getK() * this.getK()),
+                s2 * (this.getI() * this.getJ() + this.getW() * this.getK()),
+                s2 * (this.getI() * this.getK() - this.getW() * this.getJ()),
+
+                s2 * (this.getI() * this.getJ() - this.getW() * this.getK()),
+                1.0d - s2 * (this.getI() * this.getI() + this.getK() * this.getK()),
+                s2 * (this.getJ() * this.getK() + this.getW() * this.getI()),
+
+                s2 * (this.getI() * this.getK() + this.getW() * this.getJ()),
+                s2 * (this.getJ() * this.getK() - this.getW() * this.getI()),
+                1.0d - s2 * (this.getI() * this.getI() + this.getJ() * this.getJ())
+        );
+        //LEFT HANDED
+        /*return new Matrix3d(
                 1.0d - s2 * (this.getJ() * this.getJ() + this.getK() * this.getK()),
                 s2 * (this.getI() * this.getJ() - this.getW() * this.getK()),
                 s2 * (this.getI() * this.getK() + this.getW() * this.getJ()),
@@ -213,7 +228,20 @@ public class Quat4d {
                 s2 * (this.getI() * this.getK() - this.getW() * this.getJ()),
                 s2 * (this.getJ() * this.getK() + this.getW() * this.getI()),
                 1.0d - s2 * (this.getI() * this.getI() + this.getJ() * this.getJ())
-        );
+        );*/
+        /*return new Matrix3d(
+                1.0d - s2 * (this.getK() * this.getK() + this.getJ() * this.getJ()),
+                s2 * (this.getI() * this.getK() - this.getW() * this.getJ()),
+                s2 * (this.getI() * this.getJ() + this.getW() * this.getK()),
+
+                s2 * (this.getI() * this.getK() + this.getW() * this.getJ()),
+                1.0d - s2 * (this.getI() * this.getI() + this.getJ() * this.getJ()),
+                s2 * (this.getK() * this.getJ() - this.getW() * this.getI()),
+
+                s2 * (this.getI() * this.getJ() - this.getW() * this.getK()),
+                s2 * (this.getK() * this.getJ() + this.getW() * this.getI()),
+                1.0d - s2 * (this.getI() * this.getI() + this.getK() * this.getK())
+        );*/
     }
 
     @Override

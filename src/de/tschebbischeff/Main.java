@@ -59,11 +59,11 @@ public class Main {
             Vector3d exesPosition = exes.getPosition(time);
             double thisRithDiameter = angularDiameter(rith.getRadius() * 2.0d, exesPosition.sub(rithPosition).len() - exes.getRadius());
             minRithDiameter = Math.min(minRithDiameter, thisRithDiameter);
-            avgRithDiameter = ((samples / (samples+1)) * avgRithDiameter + (1 / (samples+1.0d)) * thisRithDiameter);
+            avgRithDiameter = ((samples / (samples + 1)) * avgRithDiameter + (1 / (samples + 1.0d)) * thisRithDiameter);
             maxRithDiameter = Math.max(maxRithDiameter, thisRithDiameter);
             double thisStarDiameter = angularDiameter(star.getRadius() * 2.0d, exesPosition.len() - exes.getRadius());
             minStarDiameter = Math.min(minStarDiameter, thisStarDiameter);
-            avgStarDiameter = ((samples / (samples+1)) * avgStarDiameter + (1.0d / (samples+1.0d)) * thisStarDiameter);
+            avgStarDiameter = ((samples / (samples + 1)) * avgStarDiameter + (1.0d / (samples + 1.0d)) * thisStarDiameter);
             maxStarDiameter = Math.max(maxStarDiameter, thisStarDiameter);
             samples++;
         }
@@ -81,10 +81,21 @@ public class Main {
         System.out.println("Done in: " + (timing / 1000.0d) + " seconds.");
         System.out.println("===STARTING VISUALIZATION===");
 
-        GlVisualizer glVisualizer = new GlVisualizer();
-        glVisualizer.addCelestialBody(star);
-        glVisualizer.addOrbit(rithOrbit);
-        glVisualizer.run();
+        new GlVisualizer()
+                .setOrbitResolution(7)
+                .setCameraSpeed(Scales.astronomicalUnit()*0.5d)
+                .setCameraTurnSpeed(10.0d)
+                .setOrbitColorAlpha(1.0f)
+                .setCelestialBodyColorAlpha(1.0f)
+                .setVisualizationSpeed(1.0d)
+
+                .addCelestialBody(star)
+                .addOrbit(rithOrbit)
+                .addCelestialBody(rith)
+                .addOrbit(exesOrbit)
+                .addCelestialBody(exes)
+
+                .run();
     }
 
     public static double angularDiameter(double diameter, double distance) {

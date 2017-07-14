@@ -241,7 +241,7 @@ public class Orbit {
      *
      * @return The parent celestial body.
      */
-    protected CelestialBody getParentBody() {
+    public CelestialBody getParentBody() {
         return this.parent;
     }
 

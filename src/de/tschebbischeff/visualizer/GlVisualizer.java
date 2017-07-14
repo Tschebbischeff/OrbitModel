@@ -15,6 +15,8 @@ import org.lwjgl.system.*;
 import java.awt.*;
 import java.nio.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -39,6 +41,16 @@ public class GlVisualizer {
     private long window;
 
     /**
+     * The height of the created window.
+     */
+    private final int WINDOW_HEIGHT = 500;
+
+    /**
+     * The width of the created window.
+     */
+    private final int WINDOW_WIDTH = 500;
+
+    /**
      * Object of a class that handles loading, compiling and using shaders from the shaders folder.
      */
     private ShaderManager shaderManager;
@@ -49,21 +61,31 @@ public class GlVisualizer {
     private Color[] colorOrder;
 
     /**
-     * The celestial bodies to draw.
+     * The next index to use for orbit coloring.
      */
-    private ArrayList<CelestialBody> celestialBodies = new ArrayList<>();
+    private int orbitColorIndex = 0;
 
     /**
-     * The orbits to draw.
+     * The next index to use for celestial body coloring.
      */
-    private ArrayList<Orbit> orbits = new ArrayList<Orbit>();
+    private int celestialBodyColorIndex = 0;
+
+    /**
+     * The celestial bodies to draw and their VAOs
+     */
+    private HashMap<CelestialBody, Integer> celestialBodies = new HashMap<>();
+
+    /**
+     * The orbits to draw and their VAOs
+     */
+    private HashMap<Orbit, Integer> orbits = new HashMap<>();
 
     /**
      * Orbit resolution, how many vertices per orbit should be drawn.
      * There will be (2^orbitResolution) vertices to build the elliptical orbit.
      * orbitResolution has to be at least 3.
      */
-    private double orbitResolution = 7;
+    private int orbitResolution = 7;
 
     /**
      * The speed with which to accelerate time for the simulation.
@@ -88,7 +110,7 @@ public class GlVisualizer {
     /**
      * The camera translation
      */
-    private Vector3d cameraTranslation = new Vector3d(0.0d, 0.0d, Scales.astronomicalUnit()/2.0d);
+    private Vector3d cameraTranslation = new Vector3d(0.0d, 0.0d, 2.0d*Scales.astronomicalUnit());
 
     /**
      * How much the camera is turned horizontally.
@@ -108,30 +130,47 @@ public class GlVisualizer {
     /**
      * The speed with which the camera moves.
      */
-    private double cameraSpeed = Scales.astronomicalUnit() / 10.0d;
+    private double cameraSpeed = Scales.astronomicalUnit() / 5.0d;
 
     /**
      * The speed with which the camera turns.
      */
-    private double cameraTurnSpeed = 45.0d;
+    private double cameraTurnSpeed = 5.0d;
 
     /**
-     * Creates a new GlVisualizer object. The visualization can be started with the run method.
+     * The cursors x-position.
      */
-    public GlVisualizer() {
-        this.colorOrder = new Color[]{
-                new Color(1.0f, 0.0f, 0.0f),
-                new Color(1.0f, 0.5f, 0.0f),
-                new Color(1.0f, 1.0f, 0.0f),
-                new Color(0.5f, 1.0f, 0.0f),
-                new Color(0.0f, 1.0f, 0.0f),
-                new Color(0.0f, 1.0f, 0.5f),
-                new Color(0.0f, 1.0f, 1.0f),
-                new Color(0.0f, 0.5f, 1.0f),
-                new Color(0.0f, 0.0f, 1.0f)
-        };
-        this.shaderManager = new ShaderManager();
-    }
+    private double[] xPos = new double[]{0d};
+
+    /**
+     * The cursors y-position.
+     */
+    private double[] yPos = new double[]{0d};
+
+    /**
+     * The position of the model matrix in the shader.
+     */
+    private int uniformModelMatrix;
+
+    /**
+     * The position of the view matrix in the shader.
+     */
+    private int uniformViewMatrix;
+
+    /**
+     * The position of the projection matrix in the shader.
+     */
+    private int uniformProjectionMatrix;
+
+    /**
+     * The position of the position attribute in the shader.
+     */
+    private int shaderAttributePosition;
+
+    /**
+     * The position of the color attribute in the shader.
+     */
+    private int shaderAttributeColor;
 
     /**
      * Sets the color order to use for the visualization. The color order determines in which color the orbits
@@ -146,36 +185,14 @@ public class GlVisualizer {
     }
 
     /**
-     * Adds an orbit to the list of orbits that are drawn.
-     *
-     * @param orbit The orbit to add to the list.
-     * @return This GlVisualizer for fluent method calls.
-     */
-    public GlVisualizer addOrbit(Orbit orbit) {
-        this.orbits.add(orbit);
-        return this;
-    }
-
-    /**
-     * Adds a celestial body to the list of orbits that are drawn.
-     *
-     * @param body The body to add to the list.
-     * @return This GlVisualizer for fluent method calls.
-     */
-    public GlVisualizer addCelestialBody(CelestialBody body) {
-        this.celestialBodies.add(body);
-        return this;
-    }
-
-    /**
      * Sets the resolution to draw the orbits with. A total of 2^resolution vertices will be drawn for
      * each orbit. The minimum value is three.
      *
      * @param resolution The new resolution to use for orbit drawing.
      * @return This GlVisualizer for fluent method calls.
      */
-    public GlVisualizer setOrbitResolution(double resolution) {
-        this.orbitResolution = resolution;
+    public GlVisualizer setOrbitResolution(int resolution) {
+        this.orbitResolution = Math.max(3, resolution);
         return this;
     }
 
@@ -227,7 +244,7 @@ public class GlVisualizer {
 
     /**
      * Sets the speed with which the camera turns.
-     * A value of 1.0 means 1.0 degree per second.
+     * A value of 1.0 means 1.0 degree per second per pixel.
      *
      * @param speed The new value with which the camera turns.
      * @return This GlVisualizer for fluent method calls.
@@ -258,59 +275,98 @@ public class GlVisualizer {
     }
 
     /**
-     * Starts the visualization
+     * Creates a new GlVisualizer object. The visualization can be started with the run method.
      */
-    public void run() {
-
+    public GlVisualizer() {
+        this.colorOrder = new Color[]{
+                new Color(1.0f, 0.0f, 0.0f),
+                new Color(1.0f, 0.5f, 0.0f),
+                new Color(1.0f, 1.0f, 0.0f),
+                new Color(0.5f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.5f),
+                new Color(0.0f, 1.0f, 1.0f),
+                new Color(0.0f, 0.5f, 1.0f),
+                new Color(0.0f, 0.0f, 1.0f)
+        };
+        this.shaderManager = new ShaderManager();
         this.initialize();
-        // This line is critical for LWJGL's interoperation with GLFW's
-        // OpenGL context, or any context that is managed externally.
-        // LWJGL detects the context that is current in the current thread,
-        // creates the GLCapabilities instance and makes the OpenGL
-        // bindings available for use.
         GL.createCapabilities();
 
-        int vao = glGenVertexArrays();
-        glBindVertexArray(vao);
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            FloatBuffer vertices = stack.mallocFloat(3 * 6);
-            vertices.put(-0.6f).put(-0.4f).put(0f).put(1f).put(0f).put(0f);
-            vertices.put(0.6f).put(-0.4f).put(0f).put(0f).put(1f).put(0f);
-            vertices.put(0f).put(0.6f).put(0f).put(0f).put(0f).put(1f);
-            vertices.flip();
-
-            int vbo = glGenBuffers();
-            glBindBuffer(GL_ARRAY_BUFFER, vbo);
-            glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
-        }
+        glLineWidth(10.0f);
+        glDisable(GL_LINE_SMOOTH);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         this.shaderManager.loadAndCompileShaderPair("default");
         int shaderProgram = this.shaderManager.useShaders("default");
 
-        int posAttrib = glGetAttribLocation(shaderProgram, "position");
-        glEnableVertexAttribArray(posAttrib);
-        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, false, 6 * Float.BYTES, 0);
-        int colAttrib = glGetAttribLocation(shaderProgram, "color");
-        glEnableVertexAttribArray(colAttrib);
-        glVertexAttribPointer(colAttrib, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES);
+        this.shaderAttributePosition = glGetAttribLocation(shaderProgram, "position");
+        this.shaderAttributeColor = glGetAttribLocation(shaderProgram, "color");
+        this.uniformModelMatrix = glGetUniformLocation(shaderProgram, "model");
+        this.uniformViewMatrix = glGetUniformLocation(shaderProgram, "view");
+        this.uniformProjectionMatrix = glGetUniformLocation(shaderProgram, "projection");
+    }
 
-        int uniModel = glGetUniformLocation(shaderProgram, "model");
-        int uniView = glGetUniformLocation(shaderProgram, "view");
-        int uniProjection = glGetUniformLocation(shaderProgram, "projection");
-        Matrix4f model = new Matrix4f();
-        glUniformMatrix4fv(uniModel, false, model.getData());
-        float ratio = 1000f / 1000f;
-        //Matrix4f projection = Matrix4f.perspective(90f, ratio, -1f, 1f);
-        //Matrix4f projection = Matrix4f.frustum(-1f, 1f,-1f, 1f, -1f, 1f);
-        Matrix4f projection = Matrix4f.orthographic(-ratio, ratio, -1f, 1f, 0.1f, 10f);
-        glUniformMatrix4fv(uniProjection, false, projection.getData());
+    /**
+     * Adds an orbit to the list of orbits that are drawn.
+     *
+     * @param orbit The orbit to add to the list.
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer addOrbit(Orbit orbit) {
+        int vao = glGenVertexArrays();
+        glBindVertexArray(vao);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            DoubleBuffer vertices = stack.mallocDouble((Math.round((float) Math.pow(2, this.orbitResolution))) * 7);
+            System.out.println((Math.round((float) Math.pow(2, this.orbitResolution))));
+            Vector3d vertex;
+            double trueAnomaly = 0d;
+            for (int step = 0; step < Math.pow(2, this.orbitResolution); step++) {
+                trueAnomaly = step * ((2.0d * Math.PI) / Math.pow(2, this.orbitResolution));
+                vertex = orbit.getOrbitalPositionByTrueAnomaly(trueAnomaly);
+                vertices.put(vertex.getX()).put(vertex.getY()).put(vertex.getZ())
+                        .put(this.colorOrder[this.orbitColorIndex].getRed()).put(this.colorOrder[this.orbitColorIndex].getBlue()).put(this.colorOrder[this.orbitColorIndex].getGreen()).put(this.orbitColorAlpha);
+            }
+            vertices.flip();
+            int vbo = glGenBuffers();
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+        }
+        glEnableVertexAttribArray(this.shaderAttributePosition);
+        glVertexAttribPointer(this.shaderAttributePosition, 3, GL_DOUBLE, false, 7 * Double.BYTES, 0);
+        glEnableVertexAttribArray(this.shaderAttributeColor);
+        glVertexAttribPointer(this.shaderAttributeColor, 4, GL_DOUBLE, false, 7 * Double.BYTES, 3 * Double.BYTES);
+        this.orbits.put(orbit, vao);
+        this.orbitColorIndex = (this.orbitColorIndex+1) % this.colorOrder.length;
+        return this;
+    }
+
+    /**
+     * Adds a celestial body to the list of orbits that are drawn.
+     *
+     * @param body The body to add to the list.
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer addCelestialBody(CelestialBody body) {
+        this.celestialBodies.put(body, 0);
+        return this;
+    }
+
+    /**
+     * Shows the window and starts the visualization
+     */
+    public void run() {
+        // Make the window visible
+        glfwShowWindow(window);
+
+        Matrix4f modelMatrix;
+        float aspectRatio = WINDOW_WIDTH / WINDOW_HEIGHT;
+        Matrix4f projectionMatrix = Matrix4f.perspective(90f, aspectRatio, (float) (0.01f * Scales.astronomicalUnit()), (float) (100f * Scales.astronomicalUnit()));
+        glUniformMatrix4fv(this.uniformProjectionMatrix, false, projectionMatrix.getData());
 
         // Set the clear color
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-        this.cameraTranslation.setData(new double[]{0.0d, 0.0d, 1.0d});
-        this.cameraSpeed = 0.5d;
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
@@ -322,11 +378,12 @@ public class GlVisualizer {
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 
+            //view matrix
             double[][] rotation = this.cameraRotation.toRotationMatrix().getData();
             Matrix4f r = new Matrix4f(
-                    new Vector4f((float) rotation[0][0], (float) rotation[1][0], (float) rotation[2][0], (float) -cameraTranslation.getX()),
-                    new Vector4f((float) rotation[0][1], (float) rotation[1][1], (float) rotation[2][1], (float) -cameraTranslation.getY()),
-                    new Vector4f((float) rotation[0][2], (float) rotation[1][2], (float) rotation[2][2], (float) -cameraTranslation.getZ()),
+                    new Vector4f((float) rotation[0][0], (float) rotation[1][0], (float) rotation[2][0], 0f),
+                    new Vector4f((float) rotation[0][1], (float) rotation[1][1], (float) rotation[2][1], 0f),
+                    new Vector4f((float) rotation[0][2], (float) rotation[1][2], (float) rotation[2][2], 0f),
                     new Vector4f(0f, 0f, 0f, 1f)
             ).transpose();
             Matrix4f t = new Matrix4f(
@@ -335,11 +392,15 @@ public class GlVisualizer {
                     new Vector4f(0f, 0f, 1f, (float) -cameraTranslation.getZ()),
                     new Vector4f(0f, 0f, 0f, 1f)
             ).transpose();
+            glUniformMatrix4fv(this.uniformViewMatrix, false, (r.multiply(t)).getData());
 
-            glUniformMatrix4fv(uniView, false, (t.multiply(r)).getData());
+            //model matrix
+            modelMatrix = new Matrix4f();
+            //transformations?
+            glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
 
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-            //this.loop(deltaTime);
+            //draw
+            this.loop(deltaTime);
 
             glfwSwapBuffers(window); // swap the color buffers
 
@@ -356,6 +417,73 @@ public class GlVisualizer {
         // Terminate GLFW and free the error callback
         glfwTerminate();
         glfwSetErrorCallback(null).free();
+    }
+
+    /**
+     * Runs rendering related stuff.
+     *
+     * @param deltaTime The time elapsed since the last time this method was called, in seconds.
+     */
+    private void loop(double deltaTime) {
+        this.currentTime += (deltaTime * this.visualizationSpeed);
+        this.drawOrbits();
+        //this.drawCelestialBodies();
+    }
+
+    /**
+     * Draws all registered orbits
+     */
+    private void drawOrbits() {
+        //Vector3d translation;
+        for (Map.Entry<Orbit, Integer> entry: this.orbits.entrySet()) {
+            //translation = entry.getKey().getParentBody().getPosition(this.currentTime);
+            glBindVertexArray(entry.getValue());
+            glDrawArrays(GL_LINE_LOOP, 0, Math.round((float) Math.pow(2, this.orbitResolution)));
+        }
+    }
+
+    /**
+     * Draws all registered celestial bodies
+     */
+    private void drawCelestialBodies() {
+        /*int colorIndex = 0;
+        Vector3d position;
+        glPointSize(10.0f);
+        for (CelestialBody body : this.celestialBodies) {
+            position = body.getPosition(this.currentTime);
+            glColor4f(this.colorOrder[colorIndex].getRed(), this.colorOrder[colorIndex].getGreen(), this.colorOrder[colorIndex].getBlue(), this.celestialBodyColorAlpha);
+            glBegin(GL_POINT);
+            glVertex3d(position.getX(), position.getY(), position.getZ());
+            glEnd();
+            colorIndex = (colorIndex + 1) % this.colorOrder.length;
+        }*/
+    }
+
+    /**
+     * Processes mouse and continous keyboard input
+     *
+     * @param deltaTime The time passed since this method was last called.
+     */
+    private void handleInput(double deltaTime) {
+        Vector3d forward = this.cameraRotation.yaw(180).rotateVector(Vector3d.Z_AXIS_NEG).normalize();
+        Vector3d right = this.cameraRotation.yaw(180).pitch(90).rotateVector(Vector3d.Z_AXIS_NEG).normalize();
+        if (KeyListener.isKeyDown(GLFW_KEY_W)) {
+            this.cameraTranslation = this.cameraTranslation.add(forward.scale(this.cameraSpeed*deltaTime));
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_A)) {
+            this.cameraTranslation = this.cameraTranslation.add(right.scale(-this.cameraSpeed*deltaTime));
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_S)) {
+            this.cameraTranslation = this.cameraTranslation.add(forward.scale(-this.cameraSpeed*deltaTime));
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_D)) {
+            this.cameraTranslation = this.cameraTranslation.add(right.scale(this.cameraSpeed*deltaTime));
+        }
+        glfwGetCursorPos(window, xPos, yPos);
+        glfwSetCursorPos(window, 0, 0);
+        this.cameraAzimuth = (this.cameraAzimuth - (this.cameraTurnSpeed*deltaTime*xPos[0])) % 360.0d;
+        this.cameraZenith = Math.max(-89d, Math.min(89d, (this.cameraZenith - (this.cameraTurnSpeed*deltaTime*yPos[0]))));
+        this.cameraRotation = Quat4d.identity().pitch(this.cameraAzimuth).roll(this.cameraZenith);
     }
 
     /**
@@ -380,7 +508,7 @@ public class GlVisualizer {
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // No deprecated functionality
 
         // Create the window
-        window = glfwCreateWindow(1000, 1000, "OrbitModeler Visualizer", NULL, NULL);
+        window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "OrbitModeler Visualizer", NULL, NULL);
         if (window == NULL)
             throw new RuntimeException("Failed to create the GLFW window");
 
@@ -406,92 +534,11 @@ public class GlVisualizer {
             );
         } // the stack frame is popped automatically
 
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
         // Make the OpenGL context current
         glfwMakeContextCurrent(window);
         // Enable v-sync
         glfwSwapInterval(1);
-
-        // Make the window visible
-        glfwShowWindow(window);
-    }
-
-    /**
-     * Runs rendering related stuff.
-     *
-     * @param deltaTime The time elapsed since the last time this method was called, in seconds.
-     */
-    private void loop(double deltaTime) {
-        this.currentTime += (deltaTime * this.visualizationSpeed);
-        this.drawOrbits();
-        this.drawCelestialBodies();
-    }
-
-    /**
-     * Draws all registered orbits
-     */
-    private void drawOrbits() {
-        int colorIndex = 0;
-        Vector3d position;
-        glLineWidth(5.0f);
-        for (Orbit orbit : this.orbits) {
-            glColor4f(this.colorOrder[colorIndex].getRed(), this.colorOrder[colorIndex].getGreen(), this.colorOrder[colorIndex].getBlue(), this.orbitColorAlpha);
-            glBegin(GL_LINE_STRIP);
-            for (double trueAnomaly = 0; trueAnomaly <= 2 * Math.PI; trueAnomaly += (2 * Math.PI) / Math.pow(2, this.orbitResolution)) {
-                position = orbit.getOrbitalPositionByTrueAnomaly(trueAnomaly);
-                glVertex3d(position.getX(), position.getY(), position.getZ());
-            }
-            glEnd();
-            colorIndex = (colorIndex + 1) % this.colorOrder.length;
-        }
-    }
-
-    /**
-     * Draws all registered celestial bodies
-     */
-    private void drawCelestialBodies() {
-        int colorIndex = 0;
-        Vector3d position;
-        glPointSize(10.0f);
-        for (CelestialBody body : this.celestialBodies) {
-            position = body.getPosition(this.currentTime);
-            glColor4f(this.colorOrder[colorIndex].getRed(), this.colorOrder[colorIndex].getGreen(), this.colorOrder[colorIndex].getBlue(), this.celestialBodyColorAlpha);
-            glBegin(GL_POINT);
-            glVertex3d(position.getX(), position.getY(), position.getZ());
-            glEnd();
-            colorIndex = (colorIndex + 1) % this.colorOrder.length;
-        }
-    }
-
-    /**
-     * Processes mouse and continous keyboard input
-     *
-     * @param deltaTime The time passed since this method was last called.
-     */
-    private void handleInput(double deltaTime) {
-        if (KeyListener.isKeyDown(GLFW_KEY_W)) {
-            this.cameraTranslation = this.cameraTranslation.add(this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).scale(this.cameraSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_A)) {
-            this.cameraTranslation = this.cameraTranslation.add(this.cameraRotation.rotateVector(Vector3d.X_AXIS_NEG).scale(this.cameraSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_S)) {
-            this.cameraTranslation = this.cameraTranslation.add(this.cameraRotation.rotateVector(Vector3d.Z_AXIS).scale(this.cameraSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_D)) {
-            this.cameraTranslation = this.cameraTranslation.add(this.cameraRotation.rotateVector(Vector3d.X_AXIS).scale(this.cameraSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_UP)) {
-            this.cameraZenith = Math.min(90.0d, this.cameraZenith + (this.cameraTurnSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_DOWN)) {
-            this.cameraZenith = Math.max(-90.0d, this.cameraZenith - (this.cameraTurnSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_LEFT)) {
-            this.cameraAzimuth = (this.cameraAzimuth - (this.cameraTurnSpeed*deltaTime)) % 360.0d;
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_RIGHT)) {
-            this.cameraAzimuth = (this.cameraAzimuth + (this.cameraTurnSpeed*deltaTime)) % 360.0d;
-        }
-        this.cameraRotation = Quat4d.identity().roll(this.cameraZenith).pitch(this.cameraAzimuth);
     }
 }

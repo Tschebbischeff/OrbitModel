@@ -30,11 +30,14 @@ public class KeyListener implements GLFWKeyCallbackI {
     @Override
     public void invoke(long window, int key, int scancode, int action, int mods) {
         if (action == GLFW_RELEASE) {
-            if (key == GLFW_KEY_PAGE_UP) {
+            if (key == GLFW_KEY_I) {
                 this.glVisualizer.setCameraSpeed(this.glVisualizer.getCameraSpeed()*2.0d);
             }
-            if (key == GLFW_KEY_PAGE_DOWN) {
+            if (key == GLFW_KEY_K) {
                 this.glVisualizer.setCameraSpeed(this.glVisualizer.getCameraSpeed()/2.0d);
+            }
+            if (key == GLFW_KEY_ESCAPE) {
+                glfwSetWindowShouldClose(window, true);
             }
         }
         keys[key] = action != GLFW_RELEASE;
