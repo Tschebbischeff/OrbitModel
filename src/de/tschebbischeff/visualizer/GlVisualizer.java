@@ -43,12 +43,12 @@ public class GlVisualizer {
     /**
      * The height of the created window.
      */
-    private final int WINDOW_HEIGHT = 500;
+    private final int WINDOW_HEIGHT;
 
     /**
      * The width of the created window.
      */
-    private final int WINDOW_WIDTH = 500;
+    private final int WINDOW_WIDTH;
 
     /**
      * Object of a class that handles loading, compiling and using shaders from the shaders folder.
@@ -277,7 +277,9 @@ public class GlVisualizer {
     /**
      * Creates a new GlVisualizer object. The visualization can be started with the run method.
      */
-    public GlVisualizer() {
+    public GlVisualizer(int windowWidth, int windowHeight) {
+        this.WINDOW_WIDTH = windowWidth;
+        this.WINDOW_HEIGHT = windowHeight;
         this.colorOrder = new Color[]{
                 new Color(1.0f, 0.0f, 0.0f),
                 new Color(1.0f, 0.5f, 0.0f),
