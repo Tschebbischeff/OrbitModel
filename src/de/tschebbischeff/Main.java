@@ -4,6 +4,7 @@ import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.CelestialBody;
 import de.tschebbischeff.model.Orbit;
 import de.tschebbischeff.model.Scales;
+import de.tschebbischeff.visualizer.GlVisualizer;
 
 public class Main {
 
@@ -78,6 +79,12 @@ public class Main {
         timing = System.currentTimeMillis() - timing;
         System.out.println("===END===");
         System.out.println("Done in: " + (timing / 1000.0d) + " seconds.");
+        System.out.println("===STARTING VISUALIZATION===");
+
+        GlVisualizer glVisualizer = new GlVisualizer();
+        glVisualizer.addCelestialBody(star);
+        glVisualizer.addOrbit(rithOrbit);
+        glVisualizer.run();
     }
 
     public static double angularDiameter(double diameter, double distance) {

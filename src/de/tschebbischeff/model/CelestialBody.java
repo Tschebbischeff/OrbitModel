@@ -295,4 +295,13 @@ public class CelestialBody {
         }
     }
 
+    /**
+     * Gets the star, which is the basis of this celestial body's system.
+     *
+     * @return The star at the center of the hierarchy, or this, if this is a star.
+     */
+    public CelestialBody getSystemStar() {
+        return this.isStar() ? this : this.orbit.getSystemStar();
+    }
+
 }

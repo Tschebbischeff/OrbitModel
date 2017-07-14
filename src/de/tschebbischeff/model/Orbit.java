@@ -228,6 +228,15 @@ public class Orbit {
     }
 
     /**
+     * Gets the star, which is the basis of this orbit and its hierarchy.
+     *
+     * @return The star at the center of the orbital hieararchy.
+     */
+    public CelestialBody getSystemStar() {
+        return this.parent.getSystemStar();
+    }
+
+    /**
      * Gets the celestial body at the center / focus of this orbit.
      *
      * @return The parent celestial body.
