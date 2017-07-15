@@ -4,6 +4,7 @@ import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.CelestialBody;
 import de.tschebbischeff.model.Orbit;
 import de.tschebbischeff.model.Scales;
+import de.tschebbischeff.sunlight.LightCalculator;
 import de.tschebbischeff.visualizer.GlVisualizer;
 
 public class Main {
@@ -80,6 +81,12 @@ public class Main {
         System.out.println("===END===");
         System.out.println("Done in: " + (timing / 1000.0d) + " seconds.");
         System.out.println("===STARTING VISUALIZATION===");
+
+        //==============LIGHT CALCULATION==============\\
+        /*new LightCalculator(rith)
+                .setResolution(3)
+                .addLightEmitter(star)
+                .calculateAtTime(0d);*/
 
         //==============VISUALIZATION==============\\
         new GlVisualizer(1000, 1000)

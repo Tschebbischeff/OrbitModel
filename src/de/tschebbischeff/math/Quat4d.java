@@ -144,6 +144,11 @@ public class Quat4d {
         return new Quat4d(Math.cos(Math.toRadians(yaw) * 0.5d), 0.0d, 0.0d, Math.sin(Math.toRadians(yaw) * 0.5d)).mult(this).checkUnity();
     }
 
+    public Quat4d rotate(Vector3d axis, double angle) {
+        double sine = Math.sin(Math.toRadians(angle) * 0.5d);
+        return new Quat4d(Math.cos(Math.toRadians(angle) * 0.5d), axis.getX() * sine, axis.getY() * sine, axis.getZ() * sine).mult(this).checkUnity();
+    }
+
     public Quat4d add(Quat4d b) {
         return new Quat4d(this.getW() + b.getW(), this.getI() + b.getI(), this.getJ() + b.getJ(), this.getK() + b.getK());
     }

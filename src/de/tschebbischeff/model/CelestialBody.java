@@ -42,6 +42,10 @@ public class CelestialBody {
      */
     private Vector3d axisOfRotation = Vector3d.Z_AXIS;
     /**
+     * The time in which the celestial body rotates once around itself.
+     */
+    private double rotationalPeriod = Scales.day();
+    /**
      * The offset at time zero, this planet has on its orbit.
      */
     private double orbitalOffset = 0.0d;
@@ -182,6 +186,17 @@ public class CelestialBody {
     }
 
     /**
+     * Sets the amount of time in which the celestial body rotates once around itself.
+     *
+     * @param rotationalPeriod The new rotational period of this body.
+     * @return This celestial body for fluent method calls.
+     */
+    public CelestialBody setRotationalPeriod(double rotationalPeriod) {
+        this.rotationalPeriod = Math.max(0d, rotationalPeriod);
+        return this;
+    }
+
+    /**
      * Gets the radius of this celestial body
      *
      * @return This body's radius.
@@ -226,6 +241,15 @@ public class CelestialBody {
      */
     public double getRotationalOffset() {
         return this.rotationalOffset;
+    }
+
+    /**
+     * Gets the amount of time in which the celestial body rotates once around itself.
+     *
+     * @return The rotational period of this body.
+     */
+    public double setRotationalPeriod() {
+        return this.rotationalPeriod;
     }
 
     /**
@@ -280,6 +304,35 @@ public class CelestialBody {
             }
         }
         return this.positionCache.position;
+    }
+
+    /**
+     * Calculates the total orientation of this celestial body including its rotation around itself in a global
+     * coordinate system.
+     *
+     * @param time The absolute time at which to calculate the rotation
+     * @return The orientation of this body in a global coordinate system.
+     */
+    public Quat4d getGlobalRotation(double time) {
+        return this.getLocalRotation(time).mult(this.getGlobalOrientation());
+    }
+
+    /**
+     * Calculates the orientation of this celestial body around itself its own coordinate system.
+     *
+     * @param time The absolute time at which to calculate the rotation
+     * @return The orientation of this body in a local coordinate system.
+     */
+    public Quat4d getLocalRotation(double time) {
+        return Quat4d.identity().yaw((2 * Math.PI) * (time / this.rotationalPeriod + this.getRotationalOffset()));
+    }
+
+    /**
+     * Calculates a position on the surface of this celestial body, depending on a time and a place on the surface,
+     * characterized by azimuth and zenith angles.
+     */
+    public Vector3d getPositionOnSurface(double time, double azimuth, double zenith) {
+        return this.getPosition(time).add(Quat4d.identity().yaw(azimuth).pitch(zenith).mult(this.getGlobalRotation(time)).rotateVector(Vector3d.X_AXIS).normalize().scale(this.getRadius()));
     }
 
     /**
