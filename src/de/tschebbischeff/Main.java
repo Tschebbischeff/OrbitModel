@@ -13,25 +13,25 @@ public class Main {
 
         //==============DEFINITION==============\\
         CelestialBody star = (new CelestialBody())
-                .setRadius(8.43188E8d)
+                .setRadius(8.43188E8d * Scales.meter())
                 .setMass(432900.0d * Scales.earthMass());
         Orbit rithOrbit = (new Orbit(star))
-                .setSemiMajorAxis(2.9919574E11)
+                .setSemiMajorAxis(2.9919574E11 * Scales.meter())
                 .setEccentricity(0.0d)
                 .setInclination(0.0d)
                 .setLongitudeOfAscendingNode(0.0d)
                 .setArgumentOfPeriapsis(90.0d);
         CelestialBody rith = (new CelestialBody(rithOrbit))
-                .setRadius(69911000.0d)
+                .setRadius(69911000.0d * Scales.meter())
                 .setMass(317.8d * Scales.earthMass()); //Currently a jupiter clone
         Orbit exesOrbit = (new Orbit(rith))
-                .setSemiMajorAxis(8.0187917E8)
+                .setSemiMajorAxis(8.0187917E8 * Scales.meter())
                 .setEccentricity(0.0d)
                 .setInclination(0.0d)
                 .setLongitudeOfAscendingNode(0.0d)
                 .setArgumentOfPeriapsis(0.0d);
         CelestialBody exes = (new CelestialBody(exesOrbit))
-                .setRadius(6371000.0d)
+                .setRadius(6371000.0d * Scales.meter())
                 .setMass(1.0d * Scales.earthMass()); //Currently an earth clone
 
         //==============OUTPUT==============\\
@@ -82,12 +82,12 @@ public class Main {
         System.out.println("===STARTING VISUALIZATION===");
 
         new GlVisualizer(1000, 1000)
-                .setOrbitResolution(7)
+                .setOrbitResolution(10)
                 .setCameraSpeed(Scales.astronomicalUnit()*0.5d)
                 .setCameraTurnSpeed(10.0d)
                 .setOrbitColorAlpha(1.0f)
                 .setCelestialBodyColorAlpha(1.0f)
-                .setVisualizationSpeed(1.0d)
+                .setVisualizationSpeed(rith.getSiderealPeriod() * 0.0d)
 
                 .addCelestialBody(star)
                 .addOrbit(rithOrbit)

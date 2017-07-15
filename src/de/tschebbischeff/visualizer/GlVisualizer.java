@@ -1,13 +1,13 @@
 package de.tschebbischeff.visualizer;
 
-import de.tschebbischeff.math.Matrix3d;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.CelestialBody;
 import de.tschebbischeff.model.Orbit;
 import de.tschebbischeff.model.Scales;
-import de.tschebbischeff.visualizer.silvertiger.math.Matrix4f;
-import de.tschebbischeff.visualizer.silvertiger.math.Vector4f;
+import com.silvertiger.sphere.IcoSphereCreator;
+import com.andreaskahler.math.Matrix4f;
+import com.andreaskahler.math.Vector4f;
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
@@ -76,6 +76,11 @@ public class GlVisualizer {
     private HashMap<CelestialBody, Integer> celestialBodies = new HashMap<>();
 
     /**
+     * The number of vertices of a celestial bodies icosphere.
+     */
+    private HashMap<CelestialBody, Integer> celestialBodyVertexCounts = new HashMap<>();
+
+    /**
      * The orbits to draw and their VAOs
      */
     private HashMap<Orbit, Integer> orbits = new HashMap<>();
@@ -86,6 +91,12 @@ public class GlVisualizer {
      * orbitResolution has to be at least 3.
      */
     private int orbitResolution = 7;
+
+    /**
+     * Celestial body resolution, how many angles per sphere should be drawn.
+     * celestialBodyResolution has to be at least 1.
+     */
+    private int celestialBodyResolution = 1;
 
     /**
      * The speed with which to accelerate time for the simulation.
@@ -197,6 +208,17 @@ public class GlVisualizer {
     }
 
     /**
+     * Sets the resolution to draw the celestial bodies with. The minimum value is 0.
+     *
+     * @param resolution The new resolution to use for body drawing.
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer setCelestialBodyResolution(int resolution) {
+        this.celestialBodyResolution = Math.max(0, resolution);
+        return this;
+    }
+
+    /**
      * Sets the speed with which celestial bodies are animated along their orbits.
      * 1.0 means real time.
      *
@@ -206,6 +228,16 @@ public class GlVisualizer {
     public GlVisualizer setVisualizationSpeed(double speed) {
         this.visualizationSpeed = speed;
         return this;
+    }
+
+    /**
+     * Gets the speed with which celestial bodies and orbits are animated along their orbits.
+     * 1.0 means real time.
+     *
+     * @return The speed with which bodies are animated.
+     */
+    public double getVisualizationSpeed() {
+        return this.visualizationSpeed;
     }
 
     /**
@@ -289,14 +321,16 @@ public class GlVisualizer {
                 new Color(0.0f, 1.0f, 0.5f),
                 new Color(0.0f, 1.0f, 1.0f),
                 new Color(0.0f, 0.5f, 1.0f),
-                new Color(0.0f, 0.0f, 1.0f)
+                new Color(0.0f, 0.0f, 1.0f),
+                new Color(0.5f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 0.5f),
         };
         this.shaderManager = new ShaderManager();
         this.initialize();
         GL.createCapabilities();
 
-        glLineWidth(10.0f);
-        glDisable(GL_LINE_SMOOTH);
+        glLineWidth(1.0f);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -327,7 +361,7 @@ public class GlVisualizer {
                 trueAnomaly = step * ((2.0d * Math.PI) / Math.pow(2, this.orbitResolution));
                 vertex = orbit.getOrbitalPositionByTrueAnomaly(trueAnomaly);
                 vertices.put(vertex.getX()).put(vertex.getY()).put(vertex.getZ())
-                        .put(this.colorOrder[this.orbitColorIndex].getRed()).put(this.colorOrder[this.orbitColorIndex].getBlue()).put(this.colorOrder[this.orbitColorIndex].getGreen()).put(this.orbitColorAlpha);
+                        .put(this.colorOrder[this.orbitColorIndex].getRed()).put(this.colorOrder[this.orbitColorIndex].getGreen()).put(this.colorOrder[this.orbitColorIndex].getBlue()).put(this.orbitColorAlpha);
             }
             vertices.flip();
             int vbo = glGenBuffers();
@@ -350,7 +384,27 @@ public class GlVisualizer {
      * @return This GlVisualizer for fluent method calls.
      */
     public GlVisualizer addCelestialBody(CelestialBody body) {
-        this.celestialBodies.put(body, 0);
+        int vao = glGenVertexArrays();
+        glBindVertexArray(vao);
+        ArrayList<Vector3d> sphereMesh = new IcoSphereCreator().createIcoSphere(this.celestialBodyResolution);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            DoubleBuffer vertices = stack.mallocDouble((sphereMesh.size()) * 7);
+            for (Vector3d vertex: sphereMesh) {
+                vertices.put(vertex.getX()*body.getRadius()).put(vertex.getY()*body.getRadius()).put(vertex.getZ()*body.getRadius())
+                        .put(this.colorOrder[this.celestialBodyColorIndex].getRed()).put(this.colorOrder[this.celestialBodyColorIndex].getGreen()).put(this.colorOrder[this.celestialBodyColorIndex].getBlue()).put(this.celestialBodyColorAlpha);
+            }
+            vertices.flip();
+            int vbo = glGenBuffers();
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+        }
+        glEnableVertexAttribArray(this.shaderAttributePosition);
+        glVertexAttribPointer(this.shaderAttributePosition, 3, GL_DOUBLE, false, 7 * Double.BYTES, 0);
+        glEnableVertexAttribArray(this.shaderAttributeColor);
+        glVertexAttribPointer(this.shaderAttributeColor, 4, GL_DOUBLE, false, 7 * Double.BYTES, 3 * Double.BYTES);
+        this.celestialBodies.put(body, vao);
+        this.celestialBodyVertexCounts.put(body, sphereMesh.size());
+        this.celestialBodyColorIndex = (this.celestialBodyColorIndex+1) % this.colorOrder.length;
         return this;
     }
 
@@ -361,13 +415,12 @@ public class GlVisualizer {
         // Make the window visible
         glfwShowWindow(window);
 
-        Matrix4f modelMatrix;
         float aspectRatio = WINDOW_WIDTH / WINDOW_HEIGHT;
         Matrix4f projectionMatrix = Matrix4f.perspective(90f, aspectRatio, (float) (0.01f * Scales.astronomicalUnit()), (float) (100f * Scales.astronomicalUnit()));
         glUniformMatrix4fv(this.uniformProjectionMatrix, false, projectionMatrix.getData());
 
         // Set the clear color
-        glClearColor(0.2f, 0.2f, 0.2f, 0.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         // Run the rendering loop until the user has attempted to close
         // the window or has pressed the ESCAPE key.
@@ -394,11 +447,6 @@ public class GlVisualizer {
                     new Vector4f(0f, 0f, 0f, 1f)
             ).transpose();
             glUniformMatrix4fv(this.uniformViewMatrix, false, (r.multiply(t)).getData());
-
-            //model matrix
-            modelMatrix = new Matrix4f();
-            //transformations?
-            glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
 
             //draw
             this.loop(deltaTime);
@@ -428,16 +476,23 @@ public class GlVisualizer {
     private void loop(double deltaTime) {
         this.currentTime += (deltaTime * this.visualizationSpeed);
         this.drawOrbits();
-        //this.drawCelestialBodies();
+        this.drawCelestialBodies();
     }
 
     /**
      * Draws all registered orbits
      */
     private void drawOrbits() {
-        //Vector3d translation;
+        Vector3d translation;
         for (Map.Entry<Orbit, Integer> entry: this.orbits.entrySet()) {
-            //translation = entry.getKey().getParentBody().getPosition(this.currentTime);
+            translation = entry.getKey().getParentBody().getPosition(this.currentTime);
+            Matrix4f modelMatrix = new Matrix4f(
+                    new Vector4f(1f, 0f, 0f, (float) translation.getX()),
+                    new Vector4f(0f, 1f, 0f, (float) translation.getY()),
+                    new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
+                    new Vector4f(0f, 0f, 0f, 1f)
+            ).transpose();
+            glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
             glBindVertexArray(entry.getValue());
             glDrawArrays(GL_LINE_LOOP, 0, Math.round((float) Math.pow(2, this.orbitResolution)));
         }
@@ -447,17 +502,19 @@ public class GlVisualizer {
      * Draws all registered celestial bodies
      */
     private void drawCelestialBodies() {
-        /*int colorIndex = 0;
-        Vector3d position;
-        glPointSize(10.0f);
-        for (CelestialBody body : this.celestialBodies) {
-            position = body.getPosition(this.currentTime);
-            glColor4f(this.colorOrder[colorIndex].getRed(), this.colorOrder[colorIndex].getGreen(), this.colorOrder[colorIndex].getBlue(), this.celestialBodyColorAlpha);
-            glBegin(GL_POINT);
-            glVertex3d(position.getX(), position.getY(), position.getZ());
-            glEnd();
-            colorIndex = (colorIndex + 1) % this.colorOrder.length;
-        }*/
+        Vector3d translation;
+        for (Map.Entry<CelestialBody, Integer> entry: this.celestialBodies.entrySet()) {
+            translation = entry.getKey().getPosition(this.currentTime);
+            Matrix4f modelMatrix = new Matrix4f(
+                    new Vector4f(1f, 0f, 0f, (float) translation.getX()),
+                    new Vector4f(0f, 1f, 0f, (float) translation.getY()),
+                    new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
+                    new Vector4f(0f, 0f, 0f, 1f)
+            ).transpose();
+            glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
+            glBindVertexArray(entry.getValue());
+            glDrawArrays(GL_TRIANGLES, 0, this.celestialBodyVertexCounts.get(entry.getKey()));
+        }
     }
 
     /**
