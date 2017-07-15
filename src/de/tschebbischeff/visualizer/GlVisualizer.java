@@ -124,7 +124,17 @@ public class GlVisualizer {
     private double currentTime = 0.0d;
 
     /**
-     * The camera translation
+     * The celestial body on which to look with the camera.
+     */
+    private CelestialBody lookAtFixed = null;
+
+    /**
+     * The distance from which to look at the fixed object.
+     */
+    private double lookAtDistance = Scales.astronomicalUnit();
+
+    /**
+     * The camera translation.
      */
     private Vector3d cameraTranslation = new Vector3d(0.0d, 0.0d, 2.0d*Scales.astronomicalUnit());
 
@@ -281,6 +291,18 @@ public class GlVisualizer {
      */
     public GlVisualizer setCelestialBodyColorAlpha(float alpha) {
         this.celestialBodyColorAlpha = alpha;
+        return this;
+    }
+
+    /**
+     * Sets the camera to always look at a specified body.
+     *
+     * @param fixAt The celestial body on which to fix the camera.
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer setFixedCamera(CelestialBody fixAt) {
+        this.lookAtFixed = fixAt;
+        this.lookAtDistance = fixAt.getRadius() * 5d;
         return this;
     }
 
@@ -547,6 +569,7 @@ public class GlVisualizer {
      */
     private void drawCelestialBodies() {
         Vector3d translation;
+        glUniform1i(this.uniformMode, 0);
         for (Map.Entry<CelestialBody, Integer> entry: this.celestialBodies.entrySet()) {
             translation = entry.getKey().getPosition(this.currentTime);
             Matrix4f modelMatrix = new Matrix4f(
@@ -567,25 +590,43 @@ public class GlVisualizer {
      * @param deltaTime The time passed since this method was last called.
      */
     private void handleInput(double deltaTime) {
-        Vector3d forward = this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).normalize();
-        Vector3d right = this.cameraRotation.rotateVector(Vector3d.X_AXIS).normalize();
-        if (KeyListener.isKeyDown(GLFW_KEY_W)) {
-            this.cameraTranslation = this.cameraTranslation.add(forward.scale(this.cameraSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_A)) {
-            this.cameraTranslation = this.cameraTranslation.add(right.scale(-this.cameraSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_S)) {
-            this.cameraTranslation = this.cameraTranslation.add(forward.scale(-this.cameraSpeed*deltaTime));
-        }
-        if (KeyListener.isKeyDown(GLFW_KEY_D)) {
-            this.cameraTranslation = this.cameraTranslation.add(right.scale(this.cameraSpeed*deltaTime));
-        }
         glfwGetCursorPos(window, xPos, yPos);
         glfwSetCursorPos(window, 0, 0);
-        this.cameraAzimuth = (this.cameraAzimuth + (this.cameraTurnSpeed*deltaTime*xPos[0])) % 360.0d;
-        this.cameraZenith = Math.max(-89d, Math.min(89d, (this.cameraZenith - (this.cameraTurnSpeed*deltaTime*yPos[0]))));
+        this.cameraAzimuth = (this.cameraAzimuth + (this.cameraTurnSpeed * deltaTime * xPos[0])) % 360.0d;
+        this.cameraZenith = Math.max(-89d, Math.min(89d, (this.cameraZenith - (this.cameraTurnSpeed * deltaTime * yPos[0]))));
         this.cameraRotation = Quat4d.identity().pitch(this.cameraAzimuth).roll(-this.cameraZenith);
+        if (KeyListener.isKeyDown(GLFW_KEY_U)) {
+            this.setVisualizationSpeed(this.getVisualizationSpeed() + Scales.day() * 7d * deltaTime);
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_J)) {
+            this.setVisualizationSpeed(this.getVisualizationSpeed() - Scales.day() * 7d * deltaTime);
+        }
+        if (this.lookAtFixed == null) {
+            Vector3d forward = this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).normalize();
+            Vector3d right = this.cameraRotation.rotateVector(Vector3d.X_AXIS).normalize();
+            if (KeyListener.isKeyDown(GLFW_KEY_W)) {
+                this.cameraTranslation = this.cameraTranslation.add(forward.scale(this.cameraSpeed * deltaTime));
+            }
+            if (KeyListener.isKeyDown(GLFW_KEY_A)) {
+                this.cameraTranslation = this.cameraTranslation.add(right.scale(-this.cameraSpeed * deltaTime));
+            }
+            if (KeyListener.isKeyDown(GLFW_KEY_S)) {
+                this.cameraTranslation = this.cameraTranslation.add(forward.scale(-this.cameraSpeed * deltaTime));
+            }
+            if (KeyListener.isKeyDown(GLFW_KEY_D)) {
+                this.cameraTranslation = this.cameraTranslation.add(right.scale(this.cameraSpeed * deltaTime));
+            }
+        } else {
+            this.cameraTranslation = this.lookAtFixed.getPosition(this.currentTime).add(
+                    this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).scale(-1d).normalize().scale(this.lookAtDistance)
+            );
+            if (KeyListener.isKeyDown(GLFW_KEY_W)) {
+                this.lookAtDistance -= Math.max(this.lookAtFixed.getRadius(), Scales.astronomicalUnit() * 0.1d * deltaTime);
+            }
+            if (KeyListener.isKeyDown(GLFW_KEY_S)) {
+                this.lookAtDistance += Scales.astronomicalUnit() * 0.1d * deltaTime;
+            }
+        }
     }
 
     /**

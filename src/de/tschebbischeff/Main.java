@@ -104,6 +104,7 @@ public class Main {
                 .addOrbit(exesOrbit)
                 .addCelestialBody(exes)
 
+                .setFixedCamera(rith)
                 .run();
     }
 

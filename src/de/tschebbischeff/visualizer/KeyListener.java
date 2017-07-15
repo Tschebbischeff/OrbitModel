@@ -37,12 +37,6 @@ public class KeyListener implements GLFWKeyCallbackI {
             if (key == GLFW_KEY_K) {
                 this.glVisualizer.setCameraSpeed(this.glVisualizer.getCameraSpeed()/2.0d);
             }
-            if (key == GLFW_KEY_U) {
-                this.glVisualizer.setVisualizationSpeed(this.glVisualizer.getVisualizationSpeed() + Scales.day() * 7d);
-            }
-            if (key == GLFW_KEY_J) {
-                this.glVisualizer.setVisualizationSpeed(this.glVisualizer.getVisualizationSpeed() - Scales.day() * 7d);
-            }
             if (key == GLFW_KEY_ESCAPE) {
                 glfwSetWindowShouldClose(window, true);
             }
