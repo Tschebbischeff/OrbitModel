@@ -56,9 +56,14 @@ public class GlVisualizer {
     private ShaderManager shaderManager;
 
     /**
-     * The order in which the orbits and celestial bodies are colored.
+     * The order in which the orbits are colored.
      */
-    private Color[] colorOrder;
+    private Color[] colorOrderOrbits;
+
+    /**
+     * The order in which the celestial bodies are colored.
+     */
+    private Color[] colorOrderCelestialBodies;
 
     /**
      * The next index to use for orbit coloring.
@@ -96,7 +101,7 @@ public class GlVisualizer {
      * Celestial body resolution, how many angles per sphere should be drawn.
      * celestialBodyResolution has to be at least 1.
      */
-    private int celestialBodyResolution = 1;
+    private int celestialBodyResolution = 2;
 
     /**
      * The speed with which to accelerate time for the simulation.
@@ -174,6 +179,11 @@ public class GlVisualizer {
     private int uniformProjectionMatrix;
 
     /**
+     * Whether solid objects are drawn or the area of the orbit.
+     */
+    private int uniformMode;
+
+    /**
      * The position of the position attribute in the shader.
      */
     private int shaderAttributePosition;
@@ -185,13 +195,25 @@ public class GlVisualizer {
 
     /**
      * Sets the color order to use for the visualization. The color order determines in which color the orbits
-     * and bodies are drawn.
+     * are drawn.
      *
-     * @param colorOrder The new color order to use for the orbits and bodies.
+     * @param colorOrderOrbits The new color order to use for the orbits.
      * @return This GlVisualizer for fluent method calls.
      */
-    public GlVisualizer setColorOrder(Color[] colorOrder) {
-        this.colorOrder = colorOrder;
+    public GlVisualizer setColorOrderOrbits(Color[] colorOrderOrbits) {
+        this.colorOrderOrbits = colorOrderOrbits;
+        return this;
+    }
+
+    /**
+     * Sets the color order to use for the visualization. The color order determines in which color the bodies
+     * are drawn.
+     *
+     * @param colorOrderCelestialBodies The new color order to use for the bodies.
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer setColorOrderCelestialBodies(Color[] colorOrderCelestialBodies) {
+        this.colorOrderCelestialBodies = colorOrderCelestialBodies;
         return this;
     }
 
@@ -315,7 +337,22 @@ public class GlVisualizer {
     public GlVisualizer(int windowWidth, int windowHeight) {
         this.WINDOW_WIDTH = windowWidth;
         this.WINDOW_HEIGHT = windowHeight;
-        this.colorOrder = new Color[]{
+        this.colorOrderOrbits = new Color[]{
+                new Color(1.0f, 0.0f, 0.0f),
+                new Color(1.0f, 0.5f, 0.0f),
+                new Color(1.0f, 1.0f, 0.0f),
+                new Color(0.5f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.5f),
+                new Color(0.0f, 1.0f, 1.0f),
+                new Color(0.0f, 0.5f, 1.0f),
+                new Color(0.0f, 0.0f, 1.0f),
+                new Color(0.5f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 0.5f),
+        };
+        this.colorOrderCelestialBodies = new Color[]{
+                new Color(1.0f, 1.0f, 1.0f),
                 new Color(1.0f, 0.0f, 0.0f),
                 new Color(1.0f, 0.5f, 0.0f),
                 new Color(1.0f, 1.0f, 0.0f),
@@ -345,6 +382,7 @@ public class GlVisualizer {
         this.uniformModelMatrix = glGetUniformLocation(shaderProgram, "model");
         this.uniformViewMatrix = glGetUniformLocation(shaderProgram, "view");
         this.uniformProjectionMatrix = glGetUniformLocation(shaderProgram, "projection");
+        this.uniformMode = glGetUniformLocation(shaderProgram, "mode");
     }
 
     /**
@@ -364,7 +402,7 @@ public class GlVisualizer {
                 trueAnomaly = step * ((2.0d * Math.PI) / Math.pow(2, this.orbitResolution));
                 vertex = orbit.getOrbitalPositionByTrueAnomaly(trueAnomaly);
                 vertices.put(vertex.getX()).put(vertex.getY()).put(vertex.getZ())
-                        .put(this.colorOrder[this.orbitColorIndex].getRed()).put(this.colorOrder[this.orbitColorIndex].getGreen()).put(this.colorOrder[this.orbitColorIndex].getBlue()).put(this.orbitColorAlpha);
+                        .put(this.colorOrderOrbits[this.orbitColorIndex].getRed() / 255d).put(this.colorOrderOrbits[this.orbitColorIndex].getGreen() / 255d).put(this.colorOrderOrbits[this.orbitColorIndex].getBlue() / 255d).put(this.orbitColorAlpha);
             }
             vertices.flip();
             int vbo = glGenBuffers();
@@ -376,7 +414,7 @@ public class GlVisualizer {
         glEnableVertexAttribArray(this.shaderAttributeColor);
         glVertexAttribPointer(this.shaderAttributeColor, 4, GL_DOUBLE, false, 7 * Double.BYTES, 3 * Double.BYTES);
         this.orbits.put(orbit, vao);
-        this.orbitColorIndex = (this.orbitColorIndex+1) % this.colorOrder.length;
+        this.orbitColorIndex = (this.orbitColorIndex+1) % this.colorOrderOrbits.length;
         return this;
     }
 
@@ -394,7 +432,7 @@ public class GlVisualizer {
             DoubleBuffer vertices = stack.mallocDouble((sphereMesh.size()) * 7);
             for (Vector3d vertex: sphereMesh) {
                 vertices.put(vertex.getX()*body.getRadius()).put(vertex.getY()*body.getRadius()).put(vertex.getZ()*body.getRadius())
-                        .put(this.colorOrder[this.celestialBodyColorIndex].getRed()).put(this.colorOrder[this.celestialBodyColorIndex].getGreen()).put(this.colorOrder[this.celestialBodyColorIndex].getBlue()).put(this.celestialBodyColorAlpha);
+                        .put(this.colorOrderCelestialBodies[this.celestialBodyColorIndex].getRed() / 255d).put(this.colorOrderCelestialBodies[this.celestialBodyColorIndex].getGreen() / 255d).put(this.colorOrderCelestialBodies[this.celestialBodyColorIndex].getBlue() / 255d).put(this.celestialBodyColorAlpha);
             }
             vertices.flip();
             int vbo = glGenBuffers();
@@ -407,7 +445,7 @@ public class GlVisualizer {
         glVertexAttribPointer(this.shaderAttributeColor, 4, GL_DOUBLE, false, 7 * Double.BYTES, 3 * Double.BYTES);
         this.celestialBodies.put(body, vao);
         this.celestialBodyVertexCounts.put(body, sphereMesh.size());
-        this.celestialBodyColorIndex = (this.celestialBodyColorIndex+1) % this.colorOrder.length;
+        this.celestialBodyColorIndex = (this.celestialBodyColorIndex+1) % this.colorOrderOrbits.length;
         return this;
     }
 
@@ -419,7 +457,7 @@ public class GlVisualizer {
         glfwShowWindow(window);
 
         float aspectRatio = WINDOW_WIDTH / WINDOW_HEIGHT;
-        Matrix4f projectionMatrix = Matrix4f.perspective(90f, aspectRatio, (float) (0.01f * Scales.astronomicalUnit()), (float) (100f * Scales.astronomicalUnit()));
+        Matrix4f projectionMatrix = Matrix4f.perspective(90f, aspectRatio, (float) (0.0001f * Scales.astronomicalUnit()), (float) (10f * Scales.astronomicalUnit()));
         glUniformMatrix4fv(this.uniformProjectionMatrix, false, projectionMatrix.getData());
 
         // Set the clear color
@@ -497,7 +535,10 @@ public class GlVisualizer {
             ).transpose();
             glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
             glBindVertexArray(entry.getValue());
+            glUniform1i(this.uniformMode, 0);
             glDrawArrays(GL_LINE_LOOP, 0, Math.round((float) Math.pow(2, this.orbitResolution)));
+            glUniform1i(this.uniformMode, 1);
+            glDrawArrays(GL_TRIANGLE_FAN, 0, Math.round((float) Math.pow(2, this.orbitResolution)));
         }
     }
 

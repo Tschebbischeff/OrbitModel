@@ -38,10 +38,10 @@ public class KeyListener implements GLFWKeyCallbackI {
                 this.glVisualizer.setCameraSpeed(this.glVisualizer.getCameraSpeed()/2.0d);
             }
             if (key == GLFW_KEY_U) {
-                this.glVisualizer.setVisualizationSpeed(this.glVisualizer.getVisualizationSpeed() + Scales.day() * 7);
+                this.glVisualizer.setVisualizationSpeed(this.glVisualizer.getVisualizationSpeed() + Scales.day() * 7d);
             }
             if (key == GLFW_KEY_J) {
-                this.glVisualizer.setVisualizationSpeed(this.glVisualizer.getVisualizationSpeed() - Scales.day() * 7);
+                this.glVisualizer.setVisualizationSpeed(this.glVisualizer.getVisualizationSpeed() - Scales.day() * 7d);
             }
             if (key == GLFW_KEY_ESCAPE) {
                 glfwSetWindowShouldClose(window, true);
