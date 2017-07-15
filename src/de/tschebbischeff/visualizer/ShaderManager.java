@@ -189,6 +189,7 @@ public class ShaderManager {
      * Uses the shaders specified by their names.
      *
      * @param name The name of the vertex and the fragment shader to use.
+     * @return The handle of the used shaders.
      */
     public int useShaders(String name) {
         return this.useShaders(name, name);

@@ -308,6 +308,9 @@ public class GlVisualizer {
 
     /**
      * Creates a new GlVisualizer object. The visualization can be started with the run method.
+     *
+     * @param windowWidth The width of the created window.
+     * @param windowHeight The height of the created window.
      */
     public GlVisualizer(int windowWidth, int windowHeight) {
         this.WINDOW_WIDTH = windowWidth;
