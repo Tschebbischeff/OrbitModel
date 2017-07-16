@@ -80,6 +80,15 @@ public class CelestialBody {
     }
 
     /**
+     * Gets the radius of this celestial body
+     *
+     * @return This body's radius.
+     */
+    public double getRadius() {
+        return this.radius;
+    }
+
+    /**
      * Sets the radius of this body
      *
      * @param r The radius of this body, which must be greater than zero.
@@ -95,6 +104,15 @@ public class CelestialBody {
         }
         this.radius = r;
         return this;
+    }
+
+    /**
+     * Gets the mass of this celestial body
+     *
+     * @return This body's mass.
+     */
+    public double getMass() {
+        return this.mass;
     }
 
     /**
@@ -130,6 +148,15 @@ public class CelestialBody {
     }
 
     /**
+     * Gets the axis around which this body rotates.
+     *
+     * @return This body's axis of rotation.
+     */
+    public Vector3d getAxisOfRotation() {
+        return this.axisOfRotation;
+    }
+
+    /**
      * Sets the axis of rotation of this body. The axis is seen as relative to the orbital plane.
      *
      * @param a The axis around which this body rotates.
@@ -139,6 +166,16 @@ public class CelestialBody {
         this.axisOfRotation = a;
         this.orientationCache.invalidate();
         return this;
+    }
+
+    /**
+     * Gets the orbital offset of this body, see {@link CelestialBody#setOrbitalOffset(double)} for more
+     * information regarding the orbital offset.
+     *
+     * @return The orbital offset of this body as a value between zero and one. Excluding one, inlcuding zero.
+     */
+    public double getOrbitalOffset() {
+        return this.orbitalOffset;
     }
 
     /**
@@ -166,6 +203,16 @@ public class CelestialBody {
     }
 
     /**
+     * Gets the rotational offset of this body, see {@link CelestialBody#setRotationalOffset(double)} for more
+     * information regarding the rotational offset.
+     *
+     * @return The rotational offset of this body as a value between zero and one. Excluding one, including zero.
+     */
+    public double getRotationalOffset() {
+        return this.rotationalOffset;
+    }
+
+    /**
      * Sets the rotational offset of this body. The rotational offset defines
      * how much the body is already rotated around its axis of rotation at time zero.
      * A value of zero means it is not rotated around itself, a value of 0.5 means it has done half a rotation already.
@@ -186,6 +233,15 @@ public class CelestialBody {
     }
 
     /**
+     * Gets the amount of time in which the celestial body rotates once around itself.
+     *
+     * @return The rotational period of this body.
+     */
+    public double getRotationalPeriod() {
+        return this.rotationalPeriod;
+    }
+
+    /**
      * Sets the amount of time in which the celestial body rotates once around itself.
      *
      * @param rotationalPeriod The new rotational period of this body.
@@ -194,62 +250,6 @@ public class CelestialBody {
     public CelestialBody setRotationalPeriod(double rotationalPeriod) {
         this.rotationalPeriod = Math.max(0d, rotationalPeriod);
         return this;
-    }
-
-    /**
-     * Gets the radius of this celestial body
-     *
-     * @return This body's radius.
-     */
-    public double getRadius() {
-        return this.radius;
-    }
-
-    /**
-     * Gets the mass of this celestial body
-     *
-     * @return This body's mass.
-     */
-    public double getMass() {
-        return this.mass;
-    }
-
-    /**
-     * Gets the axis around which this body rotates.
-     *
-     * @return This body's axis of rotation.
-     */
-    public Vector3d getAxisOfRotation() {
-        return this.axisOfRotation;
-    }
-
-    /**
-     * Gets the orbital offset of this body, see {@link CelestialBody#setOrbitalOffset(double)} for more
-     * information regarding the orbital offset.
-     *
-     * @return The orbital offset of this body as a value between zero and one. Excluding one, inlcuding zero.
-     */
-    public double getOrbitalOffset() {
-        return this.orbitalOffset;
-    }
-
-    /**
-     * Gets the rotational offset of this body, see {@link CelestialBody#setRotationalOffset(double)} for more
-     * information regarding the rotational offset.
-     *
-     * @return The rotational offset of this body as a value between zero and one. Excluding one, including zero.
-     */
-    public double getRotationalOffset() {
-        return this.rotationalOffset;
-    }
-
-    /**
-     * Gets the amount of time in which the celestial body rotates once around itself.
-     *
-     * @return The rotational period of this body.
-     */
-    public double setRotationalPeriod() {
-        return this.rotationalPeriod;
     }
 
     /**

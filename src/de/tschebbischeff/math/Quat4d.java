@@ -1,5 +1,8 @@
 package de.tschebbischeff.math;
 
+import com.andreaskahler.math.Matrix4f;
+import com.andreaskahler.math.Vector4f;
+
 /**
  * Quaternion implementation with double precision.
  *
@@ -67,24 +70,16 @@ public class Quat4d {
         this.data = v;
     }
 
+    public static Quat4d zero() {
+        return new Quat4d(0.0d, 0.0d, 0.0d, 0.0d);
+    }
+
+    public static Quat4d identity() {
+        return new Quat4d(1.0d, 0.0d, 0.0d, 0.0d);
+    }
+
     public double getW() {
         return this.data[0];
-    }
-
-    public double getI() {
-        return this.data[1];
-    }
-
-    public double getJ() {
-        return this.data[2];
-    }
-
-    public double getK() {
-        return this.data[3];
-    }
-
-    public double[] getData() {
-        return this.data;
     }
 
     public Quat4d setW(double w) {
@@ -92,9 +87,17 @@ public class Quat4d {
         return this;
     }
 
+    public double getI() {
+        return this.data[1];
+    }
+
     public Quat4d setI(double i) {
         this.data[1] = i;
         return this;
+    }
+
+    public double getJ() {
+        return this.data[2];
     }
 
     public Quat4d setJ(double j) {
@@ -102,18 +105,26 @@ public class Quat4d {
         return this;
     }
 
+    public double getK() {
+        return this.data[3];
+    }
+
     public Quat4d setK(double k) {
         this.data[3] = k;
         return this;
     }
 
-    public Quat4d setData(double w, double i, double j, double k) {
-        return this.setData(new double[]{w, i, j, k});
+    public double[] getData() {
+        return this.data;
     }
 
     public Quat4d setData(double[] v) {
         this.data = v;
         return this;
+    }
+
+    public Quat4d setData(double w, double i, double j, double k) {
+        return this.setData(new double[]{w, i, j, k});
     }
 
     private Quat4d checkUnity() {
@@ -196,14 +207,6 @@ public class Quat4d {
         return new Quat4d(this.getW() / length, this.getI() / length, this.getJ() / length, this.getK() / length);
     }
 
-    public static Quat4d zero() {
-        return new Quat4d(0.0d, 0.0d, 0.0d, 0.0d);
-    }
-
-    public static Quat4d identity() {
-        return new Quat4d(1.0d, 0.0d, 0.0d, 0.0d);
-    }
-
     public Matrix3d toRotationMatrix() {
         double s2 = 2.0d / (this.len2() * this.len2());
         //RIGHT HANDED
@@ -234,19 +237,16 @@ public class Quat4d {
                 s2 * (this.getJ() * this.getK() + this.getW() * this.getI()),
                 1.0d - s2 * (this.getI() * this.getI() + this.getJ() * this.getJ())
         );*/
-        /*return new Matrix3d(
-                1.0d - s2 * (this.getK() * this.getK() + this.getJ() * this.getJ()),
-                s2 * (this.getI() * this.getK() - this.getW() * this.getJ()),
-                s2 * (this.getI() * this.getJ() + this.getW() * this.getK()),
+    }
 
-                s2 * (this.getI() * this.getK() + this.getW() * this.getJ()),
-                1.0d - s2 * (this.getI() * this.getI() + this.getJ() * this.getJ()),
-                s2 * (this.getK() * this.getJ() - this.getW() * this.getI()),
-
-                s2 * (this.getI() * this.getJ() - this.getW() * this.getK()),
-                s2 * (this.getK() * this.getJ() + this.getW() * this.getI()),
-                1.0d - s2 * (this.getI() * this.getI() + this.getK() * this.getK())
-        );*/
+    public Matrix4f toGlRotationMatrix() {
+        double[][] rotation = this.toRotationMatrix().getData();
+        return new Matrix4f(
+                new Vector4f((float) rotation[0][0], (float) rotation[1][0], (float) rotation[2][0], 0f),
+                new Vector4f((float) rotation[0][1], (float) rotation[1][1], (float) rotation[2][1], 0f),
+                new Vector4f((float) rotation[0][2], (float) rotation[1][2], (float) rotation[2][2], 0f),
+                new Vector4f(0f, 0f, 0f, 1f)
+        ).transpose();
     }
 
     @Override

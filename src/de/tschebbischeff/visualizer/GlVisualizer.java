@@ -1,31 +1,34 @@
 package de.tschebbischeff.visualizer;
 
+import com.andreaskahler.math.Matrix4f;
+import com.andreaskahler.math.Vector4f;
+import com.silvertiger.sphere.IcoSphereCreator;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.CelestialBody;
 import de.tschebbischeff.model.Orbit;
 import de.tschebbischeff.model.Scales;
-import com.silvertiger.sphere.IcoSphereCreator;
-import com.andreaskahler.math.Matrix4f;
-import com.andreaskahler.math.Vector4f;
-import org.lwjgl.glfw.*;
-import org.lwjgl.opengl.*;
-import org.lwjgl.system.*;
+import org.lwjgl.glfw.GLFWErrorCallback;
+import org.lwjgl.glfw.GLFWVidMode;
+import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryStack;
 
 import java.awt.*;
-import java.nio.*;
+import java.nio.DoubleBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.lwjgl.glfw.Callbacks.*;
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL20.*;
-import static org.lwjgl.opengl.GL30.*;
-import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import static org.lwjgl.opengl.GL30.glGenVertexArrays;
+import static org.lwjgl.system.MemoryStack.stackPush;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 /**
  * Visualizes the orbits and planets in an OpenGL frame.
@@ -36,20 +39,17 @@ import static org.lwjgl.system.MemoryUtil.*;
 public class GlVisualizer {
 
     /**
-     * The handle for the OpenGL window.
-     */
-    private long window;
-
-    /**
      * The height of the created window.
      */
     private final int WINDOW_HEIGHT;
-
     /**
      * The width of the created window.
      */
     private final int WINDOW_WIDTH;
-
+    /**
+     * The handle for the OpenGL window.
+     */
+    private long window;
     /**
      * Object of a class that handles loading, compiling and using shaders from the shaders folder.
      */
@@ -81,6 +81,11 @@ public class GlVisualizer {
     private HashMap<CelestialBody, Integer> celestialBodies = new HashMap<>();
 
     /**
+     * The celestial bodies in the order they were added
+     */
+    private ArrayList<CelestialBody> celestialBodyOrder = new ArrayList<>();
+
+    /**
      * The number of vertices of a celestial bodies icosphere.
      */
     private HashMap<CelestialBody, Integer> celestialBodyVertexCounts = new HashMap<>();
@@ -89,6 +94,11 @@ public class GlVisualizer {
      * The orbits to draw and their VAOs
      */
     private HashMap<Orbit, Integer> orbits = new HashMap<>();
+
+    /**
+     * Scales the rendered bodies to make them more visible on their orbits.
+     */
+    private double scaleBodies = 1.0d;
 
     /**
      * Orbit resolution, how many vertices per orbit should be drawn.
@@ -134,9 +144,14 @@ public class GlVisualizer {
     private double lookAtDistance = Scales.astronomicalUnit();
 
     /**
+     * How many steps away the camera should currently be positioned form the looked at object in fixed mode.
+     */
+    private double cameraFixedDistanceSteps = 0;
+
+    /**
      * The camera translation.
      */
-    private Vector3d cameraTranslation = new Vector3d(0.0d, 0.0d, 2.0d*Scales.astronomicalUnit());
+    private Vector3d cameraTranslation = new Vector3d(0.0d, 0.0d, 2.0d * Scales.astronomicalUnit());
 
     /**
      * How much the camera is turned horizontally.
@@ -147,6 +162,11 @@ public class GlVisualizer {
      * How much the camera is turned vertically.
      */
     private double cameraZenith = 0.0d;
+
+    /**
+     * How much the camera is turned around itself.
+     */
+    private double cameraRoll = 0.0d;
 
     /**
      * The cameras total current orientation.
@@ -204,6 +224,64 @@ public class GlVisualizer {
     private int shaderAttributeColor;
 
     /**
+     * Creates a new GlVisualizer object. The visualization can be started with the run method.
+     *
+     * @param windowWidth  The width of the created window.
+     * @param windowHeight The height of the created window.
+     */
+    public GlVisualizer(int windowWidth, int windowHeight) {
+        this.WINDOW_WIDTH = windowWidth;
+        this.WINDOW_HEIGHT = windowHeight;
+        this.colorOrderOrbits = new Color[]{
+                new Color(1.0f, 0.0f, 0.0f),
+                new Color(1.0f, 0.5f, 0.0f),
+                new Color(1.0f, 1.0f, 0.0f),
+                new Color(0.5f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.5f),
+                new Color(0.0f, 1.0f, 1.0f),
+                new Color(0.0f, 0.5f, 1.0f),
+                new Color(0.0f, 0.0f, 1.0f),
+                new Color(0.5f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 0.5f),
+        };
+        this.colorOrderCelestialBodies = new Color[]{
+                new Color(1.0f, 1.0f, 1.0f),
+                new Color(1.0f, 0.0f, 0.0f),
+                new Color(1.0f, 0.5f, 0.0f),
+                new Color(1.0f, 1.0f, 0.0f),
+                new Color(0.5f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.0f),
+                new Color(0.0f, 1.0f, 0.5f),
+                new Color(0.0f, 1.0f, 1.0f),
+                new Color(0.0f, 0.5f, 1.0f),
+                new Color(0.0f, 0.0f, 1.0f),
+                new Color(0.5f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 1.0f),
+                new Color(1.0f, 0.0f, 0.5f),
+        };
+        this.shaderManager = new ShaderManager();
+        this.initialize();
+        GL.createCapabilities();
+
+        glLineWidth(1.0f);
+        glEnable(GL_BLEND);
+        glEnable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        this.shaderManager.loadAndCompileShaderPair("default");
+        int shaderProgram = this.shaderManager.useShaders("default");
+
+        this.shaderAttributePosition = glGetAttribLocation(shaderProgram, "position");
+        this.shaderAttributeColor = glGetAttribLocation(shaderProgram, "color");
+        this.uniformModelMatrix = glGetUniformLocation(shaderProgram, "model");
+        this.uniformViewMatrix = glGetUniformLocation(shaderProgram, "view");
+        this.uniformProjectionMatrix = glGetUniformLocation(shaderProgram, "projection");
+        this.uniformMode = glGetUniformLocation(shaderProgram, "mode");
+    }
+
+    /**
      * Sets the color order to use for the visualization. The color order determines in which color the orbits
      * are drawn.
      *
@@ -251,6 +329,16 @@ public class GlVisualizer {
     }
 
     /**
+     * Gets the speed with which celestial bodies and orbits are animated along their orbits.
+     * 1.0 means real time.
+     *
+     * @return The speed with which bodies are animated.
+     */
+    public double getVisualizationSpeed() {
+        return this.visualizationSpeed;
+    }
+
+    /**
      * Sets the speed with which celestial bodies are animated along their orbits.
      * 1.0 means real time.
      *
@@ -263,13 +351,15 @@ public class GlVisualizer {
     }
 
     /**
-     * Gets the speed with which celestial bodies and orbits are animated along their orbits.
-     * 1.0 means real time.
+     * Sets the factor by which all rendered celestial bodies are scaled, to make them more visible on their orbits,
+     * when zooming out very far. When setting this to any value above one, all planets will be the same size.
      *
-     * @return The speed with which bodies are animated.
+     * @param scale The factor by which to scale the bodies.
+     * @return This GlVisualizer for fluent method calls.
      */
-    public double getVisualizationSpeed() {
-        return this.visualizationSpeed;
+    public GlVisualizer setBodyScale(double scale) {
+        this.scaleBodies = Math.max(1.0d, scale);
+        return this;
     }
 
     /**
@@ -302,8 +392,113 @@ public class GlVisualizer {
      */
     public GlVisualizer setFixedCamera(CelestialBody fixAt) {
         this.lookAtFixed = fixAt;
-        this.lookAtDistance = fixAt.getRadius() * 5d;
+        if (fixAt != null) {
+            if (this.scaleBodies > 1.0d) {
+                this.lookAtDistance = this.scaleBodies * 5d;
+                this.cameraFixedDistanceSteps = this.scaleBodies * 5d / fixAt.getRadius();
+            } else {
+                this.lookAtDistance = fixAt.getRadius() * 5d;
+                this.cameraFixedDistanceSteps = 5d;
+            }
+        }
         return this;
+    }
+
+    /**
+     * Gets the body at which the camera is currently looking in fixed mode.
+     *
+     * @return The celestial body, at which the camera currently looks, null if the camera is currently in free mode.
+     */
+    public CelestialBody getLookedAtObject() {
+        return this.lookAtFixed;
+    }
+
+    /**
+     * Gets the distance from which the camera is currently looking at the body in fixed mode.
+     *
+     * @return The distance from the camera to the looked at celestial body.
+     */
+    public double getLookAtDistance() {
+        return this.lookAtDistance;
+    }
+
+    /**
+     * Sets the distance from which to look at the body specified in {@link GlVisualizer#setFixedCamera(CelestialBody)}.
+     *
+     * @param lookAtDistance The distance from which to look at the body.
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer setLookAtDistance(double lookAtDistance) {
+        if (this.lookAtFixed != null) {
+            this.lookAtDistance = Math.max(this.lookAtFixed.getRadius() * 2d, lookAtDistance);
+        }
+        return this;
+    }
+
+    /**
+     * Sets the camera to free mode.
+     *
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer unsetFixedCamera() {
+        this.setFixedCamera(null);
+        return this;
+    }
+
+    /**
+     * Sets the camera to fix on the next celestial body after the currently fixed one.
+     * In case of the camera being not-fixed or fixed on the last body in the list, the first body is focused.
+     *
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer fixedCameraNext() {
+        if (this.celestialBodies.size() > 0) {
+            int newIndex = 0;
+            if (this.lookAtFixed != null) {
+                newIndex = (this.celestialBodyOrder.indexOf(this.lookAtFixed) + 1) % this.celestialBodyOrder.size();
+            }
+            this.setFixedCamera(this.celestialBodyOrder.get(newIndex));
+        }
+        return this;
+    }
+
+    /**
+     * Sets the camera to fix on the previous celestial body after the currently fixed one.
+     * In case of the camera being not-fixed or fixed on the last body in the list, the first body is focused.
+     *
+     * @return This GlVisualizer for fluent method calls.
+     */
+    public GlVisualizer fixedCameraPrevious() {
+        if (this.celestialBodies.size() > 0) {
+            int newIndex = 0;
+            if (this.lookAtFixed != null) {
+                newIndex = (this.celestialBodyOrder.indexOf(this.lookAtFixed) - 1) % this.celestialBodyOrder.size();
+                if (newIndex < 0) {
+                    newIndex = this.celestialBodyOrder.size() + newIndex;
+                }
+            }
+            this.setFixedCamera(this.celestialBodyOrder.get(newIndex));
+        }
+        return this;
+    }
+
+    /**
+     * Checks whether the camera is set to fixed mode.
+     *
+     * @return True if, and only if, the camera is fixed on a celestial object.
+     */
+    public boolean isCameraFixed() {
+        return this.lookAtFixed != null;
+    }
+
+    /**
+     * Gets the speed with which the camera moves.
+     * A value of 1.0 means 1.0 units per second.
+     *
+     * @return The speed in units per second the camera moves.
+     */
+    public double getCameraSpeed() {
+        return this.cameraSpeed;
     }
 
     /**
@@ -319,28 +514,6 @@ public class GlVisualizer {
     }
 
     /**
-     * Sets the speed with which the camera turns.
-     * A value of 1.0 means 1.0 degree per second per pixel.
-     *
-     * @param speed The new value with which the camera turns.
-     * @return This GlVisualizer for fluent method calls.
-     */
-    public GlVisualizer setCameraTurnSpeed(double speed) {
-        this.cameraTurnSpeed = speed;
-        return this;
-    }
-
-    /**
-     * Gets the speed with which the camera moves.
-     * A value of 1.0 means 1.0 units per second.
-     *
-     * @return The speed in units per second the camera moves.
-     */
-    public double getCameraSpeed() {
-        return this.cameraSpeed;
-    }
-
-    /**
      * Gets the speed with which the camera turns.
      * A value of 1.0 means 1.0 degrees per second.
      *
@@ -351,60 +524,15 @@ public class GlVisualizer {
     }
 
     /**
-     * Creates a new GlVisualizer object. The visualization can be started with the run method.
+     * Sets the speed with which the camera turns.
+     * A value of 1.0 means 1.0 degree per second per pixel.
      *
-     * @param windowWidth The width of the created window.
-     * @param windowHeight The height of the created window.
+     * @param speed The new value with which the camera turns.
+     * @return This GlVisualizer for fluent method calls.
      */
-    public GlVisualizer(int windowWidth, int windowHeight) {
-        this.WINDOW_WIDTH = windowWidth;
-        this.WINDOW_HEIGHT = windowHeight;
-        this.colorOrderOrbits = new Color[]{
-                new Color(1.0f, 0.0f, 0.0f),
-                new Color(1.0f, 0.5f, 0.0f),
-                new Color(1.0f, 1.0f, 0.0f),
-                new Color(0.5f, 1.0f, 0.0f),
-                new Color(0.0f, 1.0f, 0.0f),
-                new Color(0.0f, 1.0f, 0.5f),
-                new Color(0.0f, 1.0f, 1.0f),
-                new Color(0.0f, 0.5f, 1.0f),
-                new Color(0.0f, 0.0f, 1.0f),
-                new Color(0.5f, 0.0f, 1.0f),
-                new Color(1.0f, 0.0f, 1.0f),
-                new Color(1.0f, 0.0f, 0.5f),
-        };
-        this.colorOrderCelestialBodies = new Color[]{
-                new Color(1.0f, 1.0f, 1.0f),
-                new Color(1.0f, 0.0f, 0.0f),
-                new Color(1.0f, 0.5f, 0.0f),
-                new Color(1.0f, 1.0f, 0.0f),
-                new Color(0.5f, 1.0f, 0.0f),
-                new Color(0.0f, 1.0f, 0.0f),
-                new Color(0.0f, 1.0f, 0.5f),
-                new Color(0.0f, 1.0f, 1.0f),
-                new Color(0.0f, 0.5f, 1.0f),
-                new Color(0.0f, 0.0f, 1.0f),
-                new Color(0.5f, 0.0f, 1.0f),
-                new Color(1.0f, 0.0f, 1.0f),
-                new Color(1.0f, 0.0f, 0.5f),
-        };
-        this.shaderManager = new ShaderManager();
-        this.initialize();
-        GL.createCapabilities();
-
-        glLineWidth(1.0f);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        this.shaderManager.loadAndCompileShaderPair("default");
-        int shaderProgram = this.shaderManager.useShaders("default");
-
-        this.shaderAttributePosition = glGetAttribLocation(shaderProgram, "position");
-        this.shaderAttributeColor = glGetAttribLocation(shaderProgram, "color");
-        this.uniformModelMatrix = glGetUniformLocation(shaderProgram, "model");
-        this.uniformViewMatrix = glGetUniformLocation(shaderProgram, "view");
-        this.uniformProjectionMatrix = glGetUniformLocation(shaderProgram, "projection");
-        this.uniformMode = glGetUniformLocation(shaderProgram, "mode");
+    public GlVisualizer setCameraTurnSpeed(double speed) {
+        this.cameraTurnSpeed = speed;
+        return this;
     }
 
     /**
@@ -436,7 +564,7 @@ public class GlVisualizer {
         glEnableVertexAttribArray(this.shaderAttributeColor);
         glVertexAttribPointer(this.shaderAttributeColor, 4, GL_DOUBLE, false, 7 * Double.BYTES, 3 * Double.BYTES);
         this.orbits.put(orbit, vao);
-        this.orbitColorIndex = (this.orbitColorIndex+1) % this.colorOrderOrbits.length;
+        this.orbitColorIndex = (this.orbitColorIndex + 1) % this.colorOrderOrbits.length;
         return this;
     }
 
@@ -452,8 +580,8 @@ public class GlVisualizer {
         ArrayList<Vector3d> sphereMesh = new IcoSphereCreator().createIcoSphere(this.celestialBodyResolution);
         try (MemoryStack stack = MemoryStack.stackPush()) {
             DoubleBuffer vertices = stack.mallocDouble((sphereMesh.size()) * 7);
-            for (Vector3d vertex: sphereMesh) {
-                vertices.put(vertex.getX()*body.getRadius()).put(vertex.getY()*body.getRadius()).put(vertex.getZ()*body.getRadius())
+            for (Vector3d vertex : sphereMesh) {
+                vertices.put(vertex.getX() * body.getRadius()).put(vertex.getY() * body.getRadius()).put(vertex.getZ() * body.getRadius())
                         .put(this.colorOrderCelestialBodies[this.celestialBodyColorIndex].getRed() / 255d).put(this.colorOrderCelestialBodies[this.celestialBodyColorIndex].getGreen() / 255d).put(this.colorOrderCelestialBodies[this.celestialBodyColorIndex].getBlue() / 255d).put(this.celestialBodyColorAlpha);
             }
             vertices.flip();
@@ -466,8 +594,9 @@ public class GlVisualizer {
         glEnableVertexAttribArray(this.shaderAttributeColor);
         glVertexAttribPointer(this.shaderAttributeColor, 4, GL_DOUBLE, false, 7 * Double.BYTES, 3 * Double.BYTES);
         this.celestialBodies.put(body, vao);
+        this.celestialBodyOrder.add(body);
         this.celestialBodyVertexCounts.put(body, sphereMesh.size());
-        this.celestialBodyColorIndex = (this.celestialBodyColorIndex+1) % this.colorOrderOrbits.length;
+        this.celestialBodyColorIndex = (this.celestialBodyColorIndex + 1) % this.colorOrderOrbits.length;
         return this;
     }
 
@@ -479,8 +608,6 @@ public class GlVisualizer {
         glfwShowWindow(window);
 
         float aspectRatio = WINDOW_WIDTH / WINDOW_HEIGHT;
-        Matrix4f projectionMatrix = Matrix4f.perspective(90f, aspectRatio, (float) (0.0001f * Scales.astronomicalUnit()), (float) (10f * Scales.astronomicalUnit()));
-        glUniformMatrix4fv(this.uniformProjectionMatrix, false, projectionMatrix.getData());
 
         // Set the clear color
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -490,36 +617,37 @@ public class GlVisualizer {
         long lastTime = System.nanoTime();
         double deltaTime;
         while (!glfwWindowShouldClose(window)) {
+            //all time stuff
             deltaTime = (System.nanoTime() - lastTime) / 1000000000.0d;
             lastTime = System.nanoTime();
+            this.currentTime += (deltaTime * this.visualizationSpeed);
 
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
-
-            //view matrix
-            double[][] rotation = this.cameraRotation.toRotationMatrix().getData();
-            Matrix4f r = new Matrix4f(
-                    new Vector4f((float) rotation[0][0], (float) rotation[1][0], (float) rotation[2][0], 0f),
-                    new Vector4f((float) rotation[0][1], (float) rotation[1][1], (float) rotation[2][1], 0f),
-                    new Vector4f((float) rotation[0][2], (float) rotation[1][2], (float) rotation[2][2], 0f),
-                    new Vector4f(0f, 0f, 0f, 1f)
-            );
-            Matrix4f t = new Matrix4f(
-                    new Vector4f(1f, 0f, 0f, (float) -cameraTranslation.getX()),
-                    new Vector4f(0f, 1f, 0f, (float) -cameraTranslation.getY()),
-                    new Vector4f(0f, 0f, 1f, (float) -cameraTranslation.getZ()),
-                    new Vector4f(0f, 0f, 0f, 1f)
-            ).transpose();
-            glUniformMatrix4fv(this.uniformViewMatrix, false, (r.multiply(t)).getData());
-
-            //draw
-            this.loop(deltaTime);
-
-            glfwSwapBuffers(window); // swap the color buffers
-
-            // Poll for window events. The key callback above will only be
-            // invoked during this call.
+            //handle input first (camera must be reflected in this step's view matrix)
             glfwPollEvents();
             this.handleInput(deltaTime);
+
+            //projection matrix
+            Matrix4f projectionMatrix;
+            if (this.lookAtFixed == null) {
+                projectionMatrix = Matrix4f.perspective(90f, aspectRatio, (float) (0.05f * Scales.astronomicalUnit()), (float) (100f * Scales.astronomicalUnit()));
+            } else {
+                projectionMatrix = Matrix4f.perspective(90f, aspectRatio, (float) (0.05f * this.cameraFixedDistanceSteps * this.lookAtFixed.getRadius()), (float) (100f * this.cameraFixedDistanceSteps * this.lookAtFixed.getRadius()));
+            }
+            glUniformMatrix4fv(this.uniformProjectionMatrix, false, projectionMatrix.getData());
+            //view matrix
+            Matrix4f uniformMatrix = this.cameraRotation.toGlRotationMatrix().transpose().multiply(
+                    new Matrix4f(
+                            new Vector4f(1f, 0f, 0f, (float) -cameraTranslation.getX()),
+                            new Vector4f(0f, 1f, 0f, (float) -cameraTranslation.getY()),
+                            new Vector4f(0f, 0f, 1f, (float) -cameraTranslation.getZ()),
+                            new Vector4f(0f, 0f, 0f, 1f)
+                    ).transpose());
+            glUniformMatrix4fv(this.uniformViewMatrix, false, uniformMatrix.getData());
+
+            //drawing
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+            this.drawLoop(deltaTime);
+            glfwSwapBuffers(window); // swap the color buffers
         }
 
         // Free the window callbacks and destroy the window
@@ -536,10 +664,12 @@ public class GlVisualizer {
      *
      * @param deltaTime The time elapsed since the last time this method was called, in seconds.
      */
-    private void loop(double deltaTime) {
-        this.currentTime += (deltaTime * this.visualizationSpeed);
+    private void drawLoop(double deltaTime) {
+        glUniform1i(this.uniformMode, 0);
         this.drawOrbits();
         this.drawCelestialBodies();
+        glUniform1i(this.uniformMode, 1);
+        this.drawOrbitAreas();
     }
 
     /**
@@ -547,19 +677,39 @@ public class GlVisualizer {
      */
     private void drawOrbits() {
         Vector3d translation;
-        for (Map.Entry<Orbit, Integer> entry: this.orbits.entrySet()) {
+        for (Map.Entry<Orbit, Integer> entry : this.orbits.entrySet()) {
             translation = entry.getKey().getParentBody().getPosition(this.currentTime);
-            Matrix4f modelMatrix = new Matrix4f(
-                    new Vector4f(1f, 0f, 0f, (float) translation.getX()),
-                    new Vector4f(0f, 1f, 0f, (float) translation.getY()),
-                    new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
-                    new Vector4f(0f, 0f, 0f, 1f)
-            ).transpose();
+            Matrix4f modelMatrix = Quat4d.identity().roll(90).toGlRotationMatrix().multiply( //rotate stuff to make it level on x-y plane
+                    new Matrix4f(
+                            new Vector4f(1f, 0f, 0f, (float) translation.getX()),
+                            new Vector4f(0f, 1f, 0f, (float) translation.getY()),
+                            new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
+                            new Vector4f(0f, 0f, 0f, 1f)
+                    ).transpose()
+            );
             glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
             glBindVertexArray(entry.getValue());
-            glUniform1i(this.uniformMode, 0);
             glDrawArrays(GL_LINE_LOOP, 0, Math.round((float) Math.pow(2, this.orbitResolution)));
-            glUniform1i(this.uniformMode, 1);
+        }
+    }
+
+    /**
+     * Draws all registered orbits
+     */
+    private void drawOrbitAreas() {
+        Vector3d translation;
+        for (Map.Entry<Orbit, Integer> entry : this.orbits.entrySet()) {
+            translation = entry.getKey().getParentBody().getPosition(this.currentTime);
+            Matrix4f modelMatrix = Quat4d.identity().roll(90).toGlRotationMatrix().multiply( //rotate stuff to make it level on x-y plane
+                    new Matrix4f(
+                            new Vector4f(1f, 0f, 0f, (float) translation.getX()),
+                            new Vector4f(0f, 1f, 0f, (float) translation.getY()),
+                            new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
+                            new Vector4f(0f, 0f, 0f, 1f)
+                    ).transpose()
+            );
+            glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
+            glBindVertexArray(entry.getValue());
             glDrawArrays(GL_TRIANGLE_FAN, 0, Math.round((float) Math.pow(2, this.orbitResolution)));
         }
     }
@@ -569,15 +719,27 @@ public class GlVisualizer {
      */
     private void drawCelestialBodies() {
         Vector3d translation;
-        glUniform1i(this.uniformMode, 0);
-        for (Map.Entry<CelestialBody, Integer> entry: this.celestialBodies.entrySet()) {
+        for (Map.Entry<CelestialBody, Integer> entry : this.celestialBodies.entrySet()) {
             translation = entry.getKey().getPosition(this.currentTime);
-            Matrix4f modelMatrix = new Matrix4f(
-                    new Vector4f(1f, 0f, 0f, (float) translation.getX()),
-                    new Vector4f(0f, 1f, 0f, (float) translation.getY()),
-                    new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
-                    new Vector4f(0f, 0f, 0f, 1f)
-            ).transpose();
+            Matrix4f scale;
+            if (this.scaleBodies <= 1.0d) {
+                scale = new Matrix4f();
+            } else {
+                scale = new Matrix4f(
+                        new Vector4f((float) (this.scaleBodies / entry.getKey().getRadius()), 0f, 0f, 0f),
+                        new Vector4f(0f, (float) (this.scaleBodies / entry.getKey().getRadius()), 0f, 0f),
+                        new Vector4f(0f, 0f, (float) (this.scaleBodies / entry.getKey().getRadius()), 0f),
+                        new Vector4f(0f, 0f, 0f, 1f)
+                ).transpose();
+            }
+            Matrix4f modelMatrix = (Quat4d.identity().roll(90).toGlRotationMatrix().multiply( //rotate stuff to make it level on x-y plane
+                    new Matrix4f(
+                            new Vector4f(1f, 0f, 0f, (float) translation.getX()),
+                            new Vector4f(0f, 1f, 0f, (float) translation.getY()),
+                            new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
+                            new Vector4f(0f, 0f, 0f, 1f)
+                    ).transpose().multiply(scale)
+            ));
             glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
             glBindVertexArray(entry.getValue());
             glDrawArrays(GL_TRIANGLES, 0, this.celestialBodyVertexCounts.get(entry.getKey()));
@@ -590,18 +752,21 @@ public class GlVisualizer {
      * @param deltaTime The time passed since this method was last called.
      */
     private void handleInput(double deltaTime) {
+        //camera rotation
         glfwGetCursorPos(window, xPos, yPos);
         glfwSetCursorPos(window, 0, 0);
         this.cameraAzimuth = (this.cameraAzimuth + (this.cameraTurnSpeed * deltaTime * xPos[0])) % 360.0d;
-        this.cameraZenith = Math.max(-89d, Math.min(89d, (this.cameraZenith - (this.cameraTurnSpeed * deltaTime * yPos[0]))));
-        this.cameraRotation = Quat4d.identity().pitch(this.cameraAzimuth).roll(-this.cameraZenith);
-        if (KeyListener.isKeyDown(GLFW_KEY_U)) {
+        this.cameraZenith = (this.cameraZenith + (this.cameraTurnSpeed * deltaTime * yPos[0])) % 360.0d;
+        //this.cameraZenith = Math.max(-89d, Math.min(89d, (this.cameraZenith + (this.cameraTurnSpeed * deltaTime * yPos[0]))));
+        this.cameraRotation = Quat4d.identity().yaw(this.cameraRoll).pitch(this.cameraAzimuth).roll(this.cameraZenith);
+        //control visualization speed
+        if (KeyListener.isKeyDown(GLFW_KEY_UP)) {
             this.setVisualizationSpeed(this.getVisualizationSpeed() + Scales.day() * 7d * deltaTime);
         }
-        if (KeyListener.isKeyDown(GLFW_KEY_J)) {
+        if (KeyListener.isKeyDown(GLFW_KEY_DOWN)) {
             this.setVisualizationSpeed(this.getVisualizationSpeed() - Scales.day() * 7d * deltaTime);
         }
-        if (this.lookAtFixed == null) {
+        if (!this.isCameraFixed()) { //free camera mode, control with WASD
             Vector3d forward = this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).normalize();
             Vector3d right = this.cameraRotation.rotateVector(Vector3d.X_AXIS).normalize();
             if (KeyListener.isKeyDown(GLFW_KEY_W)) {
@@ -616,15 +781,29 @@ public class GlVisualizer {
             if (KeyListener.isKeyDown(GLFW_KEY_D)) {
                 this.cameraTranslation = this.cameraTranslation.add(right.scale(this.cameraSpeed * deltaTime));
             }
-        } else {
-            this.cameraTranslation = this.lookAtFixed.getPosition(this.currentTime).add(
+            if (KeyListener.isKeyDown(GLFW_KEY_Q)) {
+                this.cameraRoll -= this.cameraTurnSpeed * deltaTime * 10d;
+            }
+            if (KeyListener.isKeyDown(GLFW_KEY_E)) {
+                this.cameraRoll += this.cameraTurnSpeed * deltaTime * 10d;
+            }
+        } else { //fixed camera mode
+            this.cameraRoll = 0d;
+            this.cameraTranslation = Quat4d.identity().roll(90).rotateVector(this.lookAtFixed.getPosition(this.currentTime)).add(
                     this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).scale(-1d).normalize().scale(this.lookAtDistance)
             );
-            if (KeyListener.isKeyDown(GLFW_KEY_W)) {
-                this.lookAtDistance -= Math.max(this.lookAtFixed.getRadius(), Scales.astronomicalUnit() * 0.1d * deltaTime);
+            //zoom
+            int mouseScroll = -ScrollListener.getMouseScroll();
+            if (KeyListener.isKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+                this.cameraFixedDistanceSteps = Math.max(2, this.cameraFixedDistanceSteps + this.cameraFixedDistanceSteps * (Math.pow(2, mouseScroll) - 1));
+            } else {
+                this.cameraFixedDistanceSteps = Math.max(2, this.cameraFixedDistanceSteps + mouseScroll);
             }
-            if (KeyListener.isKeyDown(GLFW_KEY_S)) {
-                this.lookAtDistance += Scales.astronomicalUnit() * 0.1d * deltaTime;
+            double targetLookAtDistance = this.lookAtFixed.getRadius() * ((double) this.cameraFixedDistanceSteps);
+            if (targetLookAtDistance > this.lookAtDistance) {
+                this.lookAtDistance += (targetLookAtDistance - this.lookAtDistance) * deltaTime;
+            } else if (targetLookAtDistance < this.lookAtDistance) {
+                this.lookAtDistance -= (this.lookAtDistance - targetLookAtDistance) * deltaTime;
             }
         }
     }
@@ -657,6 +836,8 @@ public class GlVisualizer {
 
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         glfwSetKeyCallback(window, new KeyListener(this));
+        glfwSetMouseButtonCallback(window, new MouseListener(this));
+        glfwSetScrollCallback(window, new ScrollListener(this));
 
         // Get the thread stack and push a new frame
         try (MemoryStack stack = stackPush()) {
