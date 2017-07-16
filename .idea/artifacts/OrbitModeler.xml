@@ -1,0 +1,62 @@
+<component name="ArtifactManager">
+  <artifact build-on-make="true" name="OrbitModeler">
+    <output-path>$PROJECT_DIR$/out/artifacts/OrbitModeler</output-path>
+    <root id="root">
+      <element id="directory" name="res">
+        <element id="dir-copy" path="$PROJECT_DIR$/res" />
+      </element>
+      <element id="directory" name="bin">
+        <element id="archive" name="OrbitModeler.jar">
+          <element id="module-output" name="OrbitModeler" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-yoga-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-xxhash.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-yoga.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-assimp-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-assimp.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-bgfx-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-bgfx.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-egl.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-glfw-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-glfw.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-jawt.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-jemalloc-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-jemalloc.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-lmdb-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-lmdb.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-nanovg-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-nanovg.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-nfd-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-nfd.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-nuklear-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-nuklear.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-openal-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-openal.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-opencl.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-opengl-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-opengl.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-opengles-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-opengles.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-openvr-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-openvr.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-ovr-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-ovr.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-par-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-par.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-sse-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-sse.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-stb-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-stb.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-tinyexr-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-tinyexr.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-tinyfd-natives-windows.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-tinyfd.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-vulkan.jar" path-in-jar="/" />
+          <element id="extracted-dir" path="$PROJECT_DIR$/lib/lwjgl-xxhash-natives-windows.jar" path-in-jar="/" />
+        </element>
+      </element>
+      <element id="file-copy" path="$PROJECT_DIR$/OrbitModeler.bat" />
+    </root>
+  </artifact>
+</component>
