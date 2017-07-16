@@ -1,7 +1,5 @@
 package de.tschebbischeff.math;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
-
 /**
  * Column-first Matrix implementation with double precision.
  *
@@ -53,11 +51,20 @@ public class Matrix3d {
     public Matrix3d(double[][] m) {
         if (m.length != 3 || m[0].length != 3 || m[1].length != 3 || m[2].length != 3)
             try {
-                throw new InvalidArgumentException(new String[]{"The given data is not of length 3 by 3"});
-            } catch (InvalidArgumentException e) {
+                throw new RuntimeException("The given data is not of length 3 by 3");
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         this.data = m;
+    }
+
+    /**
+     * Returns an identity matrix, which's values are 0 on non-diagonal elements and 1 on diagonal elements.
+     *
+     * @return A new object of the identity matrix.
+     */
+    public static Matrix3d identity() {
+        return new Matrix3d(new double[][]{{1.0d, 0.0d, 0.0d}, {0.0d, 1.0d, 0.0d}, {0.0d, 0.0d, 1.0d}});
     }
 
     /**
@@ -143,15 +150,6 @@ public class Matrix3d {
     public Vector3d getRowByIndex(int r) {
         if (r >= 3) return null;
         return new Vector3d(this.data[0][r], this.data[1][r], this.data[2][r]);
-    }
-
-    /**
-     * Returns an identity matrix, which's values are 0 on non-diagonal elements and 1 on diagonal elements.
-     *
-     * @return A new object of the identity matrix.
-     */
-    public static Matrix3d identity() {
-        return new Matrix3d(new double[][]{{1.0d, 0.0d, 0.0d}, {0.0d, 1.0d, 0.0d}, {0.0d, 0.0d, 1.0d}});
     }
 
     /**

@@ -1,6 +1,5 @@
 package de.tschebbischeff.model;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.caches.OrientationCache;
@@ -60,24 +59,6 @@ public class Orbit {
     }
 
     /**
-     * Sets the eccentricity of this orbit. The eccentricity defines how far from circular the orbit is.
-     *
-     * @param e The new eccentricity between 0 and 1, including 0, excluding 1. A value of 0 means the orbit is circular.
-     * @return This orbit for fluent method calls.
-     */
-    public Orbit setEccentricity(double e) {
-        if (e < 0 || e >= 1) {
-            try {
-                throw new InvalidArgumentException(new String[]{"Orbital eccentricity can only be modeled in the interval [0,1)"});
-            } catch (InvalidArgumentException e1) {
-                e1.printStackTrace();
-            }
-        }
-        this.eccentricity = e;
-        return this;
-    }
-
-    /**
      * Gets this orbits eccentricity, which is guaranteed to remain in the interval [0,1).
      *
      * @return This orbits eccentricity.
@@ -87,21 +68,20 @@ public class Orbit {
     }
 
     /**
-     * Sets the semi major axis of this orbit. The semi major axis together with the eccentricity defines the shape
-     * of the elliptic orbit. The semi major axis is the greatest distance from the center of the orbit.
+     * Sets the eccentricity of this orbit. The eccentricity defines how far from circular the orbit is.
      *
-     * @param a The new semi major axis for this orbit. Must be greater than zero.
+     * @param e The new eccentricity between 0 and 1, including 0, excluding 1. A value of 0 means the orbit is circular.
      * @return This orbit for fluent method calls.
      */
-    public Orbit setSemiMajorAxis(double a) {
-        if (a < Double.MIN_VALUE) {
+    public Orbit setEccentricity(double e) {
+        if (e < 0 || e >= 1) {
             try {
-                throw new InvalidArgumentException(new String[]{"Semi major axis must be greater than zero."});
-            } catch (InvalidArgumentException e) {
-                e.printStackTrace();
+                throw new RuntimeException("Orbital eccentricity can only be modeled in the interval [0,1)");
+            } catch (RuntimeException e1) {
+                e1.printStackTrace();
             }
         }
-        this.semiMajorAxis = a;
+        this.eccentricity = e;
         return this;
     }
 
@@ -115,12 +95,40 @@ public class Orbit {
     }
 
     /**
+     * Sets the semi major axis of this orbit. The semi major axis together with the eccentricity defines the shape
+     * of the elliptic orbit. The semi major axis is the greatest distance from the center of the orbit.
+     *
+     * @param a The new semi major axis for this orbit. Must be greater than zero.
+     * @return This orbit for fluent method calls.
+     */
+    public Orbit setSemiMajorAxis(double a) {
+        if (a < Double.MIN_VALUE) {
+            try {
+                throw new RuntimeException("Semi major axis must be greater than zero.");
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
+        }
+        this.semiMajorAxis = a;
+        return this;
+    }
+
+    /**
      * Gets the semi minor axis of this orbit.
      *
      * @return This orbits semi minor axis.
      */
     public double getSemiMinorAxis() {
         return this.semiMajorAxis * Math.sqrt(1.0d - eccentricity * eccentricity);
+    }
+
+    /**
+     * Gets the inclination of this orbit.
+     *
+     * @return This orbits inclination, in degrees.
+     */
+    public double getInclination() {
+        return Math.toDegrees(this.inclination);
     }
 
     /**
@@ -136,12 +144,12 @@ public class Orbit {
     }
 
     /**
-     * Gets the inclination of this orbit.
+     * Gets the longitude of ascending node of this orbit.
      *
-     * @return This orbits inclination, in degrees.
+     * @return This orbits longitude of ascending node, in degrees.
      */
-    public double getInclination() {
-        return Math.toDegrees(this.inclination);
+    public double getLongitudeOfAscendingNode() {
+        return Math.toDegrees(this.longitudeOfAscendingNode);
     }
 
     /**
@@ -159,12 +167,12 @@ public class Orbit {
     }
 
     /**
-     * Gets the longitude of ascending node of this orbit.
+     * Gets the argument of periapsis of this orbit.
      *
-     * @return This orbits longitude of ascending node, in degrees.
+     * @return This orbits argument of periapsis, in degrees.
      */
-    public double getLongitudeOfAscendingNode() {
-        return Math.toDegrees(this.longitudeOfAscendingNode);
+    public double getArgumentOfPeriapsis() {
+        return Math.toDegrees(this.argumentOfPeriapsis);
     }
 
     /**
@@ -179,15 +187,6 @@ public class Orbit {
     public Orbit setArgumentOfPeriapsis(double argumentOfPeriapsis) {
         this.argumentOfPeriapsis = Math.toRadians(argumentOfPeriapsis % 360.0d);
         return this;
-    }
-
-    /**
-     * Gets the argument of periapsis of this orbit.
-     *
-     * @return This orbits argument of periapsis, in degrees.
-     */
-    public double getArgumentOfPeriapsis() {
-        return Math.toDegrees(this.argumentOfPeriapsis);
     }
 
     /**

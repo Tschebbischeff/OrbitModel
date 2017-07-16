@@ -1,7 +1,5 @@
 package de.tschebbischeff.math;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
-
 /**
  * Vector implementation with double precision.
  *
@@ -60,8 +58,8 @@ public class Vector3d {
     public Vector3d(double[] v) {
         if (v.length != 3)
             try {
-                throw new InvalidArgumentException(new String[]{"The given data is not of length 3"});
-            } catch (InvalidArgumentException e) {
+                throw new RuntimeException("The given data is not of length 3");
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         this.data = v;
@@ -77,34 +75,6 @@ public class Vector3d {
     }
 
     /**
-     * Gets the y-coordinate of this vector.
-     *
-     * @return This vector's y-coordinate.
-     */
-    public double getY() {
-        return this.data[1];
-    }
-
-    /**
-     * Gets the z-coordinate of this vector.
-     *
-     * @return This vector's z-coordinate.
-     */
-    public double getZ() {
-        return this.data[2];
-    }
-
-    /**
-     * Gets the x-, y- and z-coordinate of this vector as an array.
-     *
-     * @return An array containing this vector's x-coordinate as the first element, and this vector's y- and
-     * z-coordinates as the second and third element respectively.
-     */
-    public double[] getData() {
-        return this.data;
-    }
-
-    /**
      * Sets this vector's x-coordinate.
      *
      * @param x The new x-coordinate of this vector.
@@ -113,6 +83,15 @@ public class Vector3d {
     public Vector3d setX(double x) {
         this.data[0] = x;
         return this;
+    }
+
+    /**
+     * Gets the y-coordinate of this vector.
+     *
+     * @return This vector's y-coordinate.
+     */
+    public double getY() {
+        return this.data[1];
     }
 
     /**
@@ -127,6 +106,15 @@ public class Vector3d {
     }
 
     /**
+     * Gets the z-coordinate of this vector.
+     *
+     * @return This vector's z-coordinate.
+     */
+    public double getZ() {
+        return this.data[2];
+    }
+
+    /**
      * Sets this vector's z-coordinate.
      *
      * @param z The new z-coordinate of this vector.
@@ -134,6 +122,34 @@ public class Vector3d {
      */
     public Vector3d setZ(double z) {
         this.data[2] = z;
+        return this;
+    }
+
+    /**
+     * Gets the x-, y- and z-coordinate of this vector as an array.
+     *
+     * @return An array containing this vector's x-coordinate as the first element, and this vector's y- and
+     * z-coordinates as the second and third element respectively.
+     */
+    public double[] getData() {
+        return this.data;
+    }
+
+    /**
+     * Sets this vector's x-, y- and z-coordinate.
+     *
+     * @param v A three element array containing the new x-coordinate as the first element and the new y- and
+     *          z-coordinate as the second and third element respectively.
+     * @return This vector for fluent method calls.
+     */
+    public Vector3d setData(double[] v) {
+        if (v.length != 3)
+            try {
+                throw new RuntimeException("The given data is not of length 3");
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+            }
+        this.data = v;
         return this;
     }
 
@@ -147,24 +163,6 @@ public class Vector3d {
      */
     public Vector3d setData(double x, double y, double z) {
         return this.setData(new double[]{x, y, z});
-    }
-
-    /**
-     * Sets this vector's x-, y- and z-coordinate.
-     *
-     * @param v A three element array containing the new x-coordinate as the first element and the new y- and
-     *          z-coordinate as the second and third element respectively.
-     * @return This vector for fluent method calls.
-     */
-    public Vector3d setData(double[] v) {
-        if (v.length != 3)
-            try {
-                throw new InvalidArgumentException(new String[]{"The given data is not of length 3"});
-            } catch (InvalidArgumentException e) {
-                e.printStackTrace();
-            }
-        this.data = v;
-        return this;
     }
 
     /**

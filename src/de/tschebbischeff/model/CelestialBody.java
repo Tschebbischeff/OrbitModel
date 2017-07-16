@@ -1,6 +1,5 @@
 package de.tschebbischeff.model;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import de.tschebbischeff.math.Quat4d;
 import de.tschebbischeff.math.Vector3d;
 import de.tschebbischeff.model.caches.OrientationCache;
@@ -97,8 +96,8 @@ public class CelestialBody {
     public CelestialBody setRadius(double r) {
         if (r < Double.MIN_VALUE) {
             try {
-                throw new InvalidArgumentException(new String[]{"Radius must be greater than zero."});
-            } catch (InvalidArgumentException e) {
+                throw new RuntimeException("Radius must be greater than zero.");
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         }
@@ -124,22 +123,22 @@ public class CelestialBody {
     public CelestialBody setMass(double m) {
         if (this.isStar() && m < (23835.0d * Scales.earthMass())) {
             try {
-                throw new InvalidArgumentException(new String[]{"Mass is too low for a star."});
-            } catch (InvalidArgumentException e) {
+                throw new RuntimeException("Mass is too low for a star.");
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         }
         if (!this.isStar() && m >= (23835.0d * Scales.earthMass())) {
             try {
-                throw new InvalidArgumentException(new String[]{"Mass is too high for a non-star celestial body."});
-            } catch (InvalidArgumentException e) {
+                throw new RuntimeException("Mass is too high for a non-star celestial body.");
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         }
         if (!this.isStar() && m < Double.MIN_VALUE) {
             try {
-                throw new InvalidArgumentException(new String[]{"Mass must be positive and non-zero."});
-            } catch (InvalidArgumentException e) {
+                throw new RuntimeException("Mass must be positive and non-zero.");
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         }
@@ -192,8 +191,8 @@ public class CelestialBody {
         } else {
             if (o < 0.0d || o >= 1.0d) {
                 try {
-                    throw new InvalidArgumentException(new String[]{"Orbital offset is not between 0 and 1!"});
-                } catch (InvalidArgumentException e) {
+                    throw new RuntimeException("Orbital offset is not between 0 and 1!");
+                } catch (RuntimeException e) {
                     e.printStackTrace();
                 }
             }
@@ -223,8 +222,8 @@ public class CelestialBody {
     public CelestialBody setRotationalOffset(double r) {
         if (r < 0.0d || r >= 1.0d) {
             try {
-                throw new InvalidArgumentException(new String[]{"Rotational offset is not between 0 and 1!"});
-            } catch (InvalidArgumentException e) {
+                throw new RuntimeException("Rotational offset is not between 0 and 1!");
+            } catch (RuntimeException e) {
                 e.printStackTrace();
             }
         }
@@ -330,6 +329,12 @@ public class CelestialBody {
     /**
      * Calculates a position on the surface of this celestial body, depending on a time and a place on the surface,
      * characterized by azimuth and zenith angles.
+     *
+     * @param time    The time at which to calculate the position on the surface.
+     * @param azimuth The azimuth angle with which to calculate the position on the surface of the body.
+     * @param zenith  The zenith angle with which to calculate the position on the surface of the body.
+     * @return A vector representing the direction from the center of the planet to the point on the surface
+     * specified by the time, azimuth and zenith.
      */
     public Vector3d getPositionOnSurface(double time, double azimuth, double zenith) {
         return this.getPosition(time).add(Quat4d.identity().yaw(azimuth).pitch(zenith).mult(this.getGlobalRotation(time)).rotateVector(Vector3d.X_AXIS).normalize().scale(this.getRadius()));
