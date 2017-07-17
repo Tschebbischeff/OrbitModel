@@ -7,6 +7,8 @@ import de.tschebbischeff.model.Orbit;
 import de.tschebbischeff.model.Scales;
 import de.tschebbischeff.visualizer.GlVisualizer;
 
+import java.awt.*;
+
 public class Main {
 
     public static void main(String[] args) {
@@ -173,51 +175,54 @@ public class Main {
         CelestialBody mercury = new CelestialBody(mercuryOrbit)
                 .setMass(0.0553 * Scales.earthMass())
                 .setRadius(2439 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-0.0).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(0.0).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(58.785 * Scales.day());
         CelestialBody venus = new CelestialBody(venusOrbit)
                 .setMass(0.815 * Scales.earthMass())
                 .setRadius(6052 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-177.36).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(177.36).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(243.686 * Scales.day());
         CelestialBody earth = new CelestialBody(earthOrbit)
                 .setMass(1.0 * Scales.earthMass())
                 .setRadius(6371 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-23.45).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(23.45).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(23.9345 * Scales.hour());
         CelestialBody mars = new CelestialBody(marsOrbit)
                 .setMass(0.107 * Scales.earthMass())
                 .setRadius(3389 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-25.19).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(25.19).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(24.6229 * Scales.hour());
         CelestialBody jupiter = new CelestialBody(jupiterOrbit)
                 .setMass(317.83 * Scales.earthMass())
                 .setRadius(69911 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-3.13).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(3.13).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(9.9250 * Scales.hour());
         CelestialBody saturn = new CelestialBody(saturnOrbit)
                 .setMass(95.159 * Scales.earthMass())
                 .setRadius(58232 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-26.73).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(26.73).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(10.656 * Scales.hour());
         CelestialBody uranus = new CelestialBody(uranusOrbit)
                 .setMass(14.536 * Scales.earthMass())
                 .setRadius(25362 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-97.77).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(97.77).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(17.24 * Scales.hour());
         CelestialBody neptune = new CelestialBody(neptuneOrbit)
                 .setMass(17.147 * Scales.earthMass())
                 .setRadius(24622 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-28.32).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(28.32).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(16.11 * Scales.hour());
         CelestialBody pluto = new CelestialBody(plutoOrbit)
                 .setMass(0.0021 * Scales.earthMass())
                 .setRadius(1195 * Scales.kilometer())
-                .setAxisOfRotation(Quat4d.identity().pitch(-122.53).rotateVector(Vector3d.Z_AXIS))
+                .setAxisOfRotation(Quat4d.identity().pitch(122.53).rotateVector(Vector3d.Z_AXIS))
                 .setRotationalPeriod(6.405 * Scales.day());
 
         //Visualizer
-        new GlVisualizer(1000, 1000)
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        int width = gd.getDisplayMode().getWidth();
+        int height = gd.getDisplayMode().getHeight();
+        new GlVisualizer(Math.round(((float) width) * 0.8f), Math.round(((float) height) * 0.8f))
                 .setOrbitResolution(10)
                 .setCelestialBodyResolution(2)
                 .setCameraSpeed(Scales.astronomicalUnit()*0.5d)

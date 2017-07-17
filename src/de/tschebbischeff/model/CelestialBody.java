@@ -317,13 +317,13 @@ public class CelestialBody {
     }
 
     /**
-     * Calculates the orientation of this celestial body around itself its own coordinate system.
+     * Calculates the orientation of this celestial body around itself in its local coordinate system.
      *
      * @param time The absolute time at which to calculate the rotation
      * @return The orientation of this body in a local coordinate system.
      */
     public Quat4d getLocalRotation(double time) {
-        return Quat4d.identity().yaw((2 * Math.PI) * (time / this.rotationalPeriod + this.getRotationalOffset()));
+        return Quat4d.identity().yaw(360d * (time / this.getRotationalPeriod() + this.getRotationalOffset()));
     }
 
     /**

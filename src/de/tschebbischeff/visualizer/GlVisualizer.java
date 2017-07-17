@@ -76,6 +76,11 @@ public class GlVisualizer {
     private int celestialBodyColorIndex = 0;
 
     /**
+     * VAO for the three spatial axes, when drawn as lines, represent a coordinate axis
+     */
+    private int coordinateSystemVao;
+
+    /**
      * The celestial bodies to draw and their VAOs
      */
     private HashMap<CelestialBody, Integer> celestialBodies = new HashMap<>();
@@ -279,6 +284,34 @@ public class GlVisualizer {
         this.uniformViewMatrix = glGetUniformLocation(shaderProgram, "view");
         this.uniformProjectionMatrix = glGetUniformLocation(shaderProgram, "projection");
         this.uniformMode = glGetUniformLocation(shaderProgram, "mode");
+
+        //basic coordinate system lines
+        int vao = glGenVertexArrays();
+        glBindVertexArray(vao);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            DoubleBuffer vertices = stack.mallocDouble(6 * 7);
+            vertices.put(0d).put(0d).put(0d)
+                    .put(1d).put(0d).put(0d).put(1d);
+            vertices.put(1d).put(0d).put(0d)
+                    .put(1d).put(0d).put(0d).put(1d);
+            vertices.put(0d).put(0d).put(0d)
+                    .put(0d).put(1d).put(0d).put(1d);
+            vertices.put(0d).put(1d).put(0d)
+                    .put(0d).put(1d).put(0d).put(1d);
+            vertices.put(0d).put(0d).put(0d)
+                    .put(0d).put(0d).put(1d).put(1d);
+            vertices.put(0d).put(0d).put(1d)
+                    .put(0d).put(0d).put(1d).put(1d);
+            vertices.flip();
+            int vbo = glGenBuffers();
+            glBindBuffer(GL_ARRAY_BUFFER, vbo);
+            glBufferData(GL_ARRAY_BUFFER, vertices, GL_STATIC_DRAW);
+        }
+        glEnableVertexAttribArray(this.shaderAttributePosition);
+        glVertexAttribPointer(this.shaderAttributePosition, 3, GL_DOUBLE, false, 7 * Double.BYTES, 0);
+        glEnableVertexAttribArray(this.shaderAttributeColor);
+        glVertexAttribPointer(this.shaderAttributeColor, 4, GL_DOUBLE, false, 7 * Double.BYTES, 3 * Double.BYTES);
+        this.coordinateSystemVao = vao;
     }
 
     /**
@@ -607,7 +640,7 @@ public class GlVisualizer {
         // Make the window visible
         glfwShowWindow(window);
 
-        float aspectRatio = WINDOW_WIDTH / WINDOW_HEIGHT;
+        float aspectRatio = ((float) WINDOW_WIDTH) / ((float) WINDOW_HEIGHT);
 
         // Set the clear color
         glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -719,11 +752,22 @@ public class GlVisualizer {
      */
     private void drawCelestialBodies() {
         Vector3d translation;
+        Quat4d rotation;
+        Matrix4f scale;
+        Matrix4f scaleCoordinateSystem;
+        Matrix4f modelMatrix;
+        Matrix4f modelMatrixCoordinateSystem;
         for (Map.Entry<CelestialBody, Integer> entry : this.celestialBodies.entrySet()) {
             translation = entry.getKey().getPosition(this.currentTime);
-            Matrix4f scale;
+            rotation = entry.getKey().getGlobalRotation(this.currentTime);
             if (this.scaleBodies <= 1.0d) {
                 scale = new Matrix4f();
+                scaleCoordinateSystem = new Matrix4f(
+                        new Vector4f((float) (2d * entry.getKey().getRadius()), 0f, 0f, 0f),
+                        new Vector4f(0f, (float) (2d * entry.getKey().getRadius()), 0f, 0f),
+                        new Vector4f(0f, 0f, (float) (2d * entry.getKey().getRadius()), 0f),
+                        new Vector4f(0f, 0f, 0f, 1f)
+                ).transpose();
             } else {
                 scale = new Matrix4f(
                         new Vector4f((float) (this.scaleBodies / entry.getKey().getRadius()), 0f, 0f, 0f),
@@ -731,18 +775,35 @@ public class GlVisualizer {
                         new Vector4f(0f, 0f, (float) (this.scaleBodies / entry.getKey().getRadius()), 0f),
                         new Vector4f(0f, 0f, 0f, 1f)
                 ).transpose();
+                scaleCoordinateSystem = new Matrix4f(
+                        new Vector4f((float) (2d * this.scaleBodies), 0f, 0f, 0f),
+                        new Vector4f(0f, (float) (2d * this.scaleBodies), 0f, 0f),
+                        new Vector4f(0f, 0f, (float) (2d * this.scaleBodies), 0f),
+                        new Vector4f(0f, 0f, 0f, 1f)
+                ).transpose();
             }
-            Matrix4f modelMatrix = (Quat4d.identity().roll(90).toGlRotationMatrix().multiply( //rotate stuff to make it level on x-y plane
+            modelMatrix = (Quat4d.identity().roll(90).toGlRotationMatrix().multiply( //rotate stuff to make it level on x-y plane
                     new Matrix4f(
                             new Vector4f(1f, 0f, 0f, (float) translation.getX()),
                             new Vector4f(0f, 1f, 0f, (float) translation.getY()),
                             new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
                             new Vector4f(0f, 0f, 0f, 1f)
-                    ).transpose().multiply(scale)
+                    ).transpose().multiply(rotation.toGlRotationMatrix()).multiply(scale)
+            ));
+            modelMatrixCoordinateSystem = (Quat4d.identity().roll(90).toGlRotationMatrix().multiply( //rotate stuff to make it level on x-y plane
+                    new Matrix4f(
+                            new Vector4f(1f, 0f, 0f, (float) translation.getX()),
+                            new Vector4f(0f, 1f, 0f, (float) translation.getY()),
+                            new Vector4f(0f, 0f, 1f, (float) translation.getZ()),
+                            new Vector4f(0f, 0f, 0f, 1f)
+                    ).transpose().multiply(rotation.toGlRotationMatrix()).multiply(scaleCoordinateSystem)
             ));
             glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrix.getData());
             glBindVertexArray(entry.getValue());
             glDrawArrays(GL_TRIANGLES, 0, this.celestialBodyVertexCounts.get(entry.getKey()));
+            glUniformMatrix4fv(this.uniformModelMatrix, false, modelMatrixCoordinateSystem.getData());
+            glBindVertexArray(this.coordinateSystemVao);
+            glDrawArrays(GL_LINES, 0, 6);
         }
     }
 
@@ -761,10 +822,37 @@ public class GlVisualizer {
         this.cameraRotation = Quat4d.identity().yaw(this.cameraRoll).pitch(this.cameraAzimuth).roll(this.cameraZenith);
         //control visualization speed
         if (KeyListener.isKeyDown(GLFW_KEY_UP)) {
-            this.setVisualizationSpeed(this.getVisualizationSpeed() + Scales.day() * 7d * deltaTime);
+            if (KeyListener.isKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+                this.setVisualizationSpeed(this.getVisualizationSpeed() + Scales.day() * 7d * deltaTime);
+            } else if (KeyListener.isKeyDown(GLFW_KEY_LEFT_CONTROL)) {
+                this.setVisualizationSpeed(this.getVisualizationSpeed() + Scales.hour() * deltaTime);
+            } else {
+                this.setVisualizationSpeed(this.getVisualizationSpeed() + Scales.day() * deltaTime);
+            }
         }
         if (KeyListener.isKeyDown(GLFW_KEY_DOWN)) {
-            this.setVisualizationSpeed(this.getVisualizationSpeed() - Scales.day() * 7d * deltaTime);
+            if (KeyListener.isKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+                this.setVisualizationSpeed(this.getVisualizationSpeed() - Scales.day() * 7d * deltaTime);
+            } else if (KeyListener.isKeyDown(GLFW_KEY_LEFT_CONTROL)) {
+                this.setVisualizationSpeed(this.getVisualizationSpeed() - Scales.hour() * deltaTime);
+            } else {
+                this.setVisualizationSpeed(this.getVisualizationSpeed() - Scales.day() * deltaTime);
+            }
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_KP_0)) {
+            this.setVisualizationSpeed(0d);
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_KP_1)) {
+            this.setVisualizationSpeed(Scales.second());
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_KP_2)) {
+            this.setVisualizationSpeed(Scales.hour());
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_KP_3)) {
+            this.setVisualizationSpeed(Scales.day());
+        }
+        if (KeyListener.isKeyDown(GLFW_KEY_KP_4)) {
+            this.setVisualizationSpeed(Scales.year());
         }
         if (!this.isCameraFixed()) { //free camera mode, control with WASD
             Vector3d forward = this.cameraRotation.rotateVector(Vector3d.Z_AXIS_NEG).normalize();
